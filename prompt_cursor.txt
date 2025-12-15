@@ -1,0 +1,25 @@
+Une chambre peut avoir plusieurs entretiens dans le temps.
+
+Si au moins un entretien est actif (en cours ou planifié sur la période courante), alors :
+
+le statut de la chambre = HORS_SERVICE
+
+la chambre est non réservable
+
+S’il n’existe aucun entretien actif pour la chambre :
+
+le statut dépend des réservations :
+
+réservée → RÉSERVÉE
+
+occupée → OCCUPÉE
+
+sinon → DISPONIBLE
+
+La fin d’un entretien déclenche automatiquement :
+
+la réévaluation du statut de la chambre
+
+le retour à DISPONIBLE uniquement s’il n’y a ni réservation ni occupation
+
+Un entretien n’affecte pas l’historique des réservations, mais bloque toute nouvelle réservation pendant sa durée.
