@@ -68,6 +68,8 @@ CREATE TABLE reservation (
     statut ENUM('EN_ATTENTE', 'CONFIRMEE', 'EN_COURS', 'TERMINEE', 'ANNULEE') NOT NULL DEFAULT 'EN_ATTENTE',
     nbPersonnes INT NOT NULL DEFAULT 1,
     notes TEXT,
+    check_in DATE NULL,
+    check_out DATE NULL,
     dateCreation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idClient) REFERENCES client(idClient) ON DELETE CASCADE,
     FOREIGN KEY (numeroChambre) REFERENCES chambre(numeroChambre) ON DELETE RESTRICT,

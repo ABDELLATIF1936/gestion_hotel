@@ -2,6 +2,8 @@ package com.hotel.view;
 
 import com.hotel.controller.ChambreController;
 import com.hotel.model.Chambre;
+import com.hotel.model.RoleUtilisateur;
+import com.hotel.security.AuthenticationService;
 import com.hotel.util.Logger;
 import com.hotel.util.TableViewHelper;
 import javafx.collections.FXCollections;
@@ -145,6 +147,37 @@ public class ChambreView extends VBox {
         // Label de statut
         lblStatus = new Label();
         lblStatus.setWrapText(true);
+    }
+    
+    /**
+     * Adapte l'interface selon le rôle de l'utilisateur.
+     * Les réceptionnistes ne peuvent que consulter et changer le statut.
+     */
+    private void adaptInterfaceToRole() {
+        if (AuthenticationService.getUtilisateurConnecte() == null) {
+            return;
+        }
+        
+        boolean isReceptionniste = AuthenticationService.getUtilisateurConnecte().getRole() == RoleUtilisateur.RECEPTIONNISTE;
+        
+        if (isReceptionniste) {
+            // Désactiver les boutons d'ajout, modification et suppression
+            btnAjouter.setDisable(true);
+            btnAjouter.setVisible(false);
+            btnModifier.setDisable(true);
+            btnModifier.setVisible(false);
+            btnSupprimer.setDisable(true);
+            btnSupprimer.setVisible(false);
+            
+            // Désactiver les champs du formulaire sauf le statut
+            txtNumero.setDisable(true);
+            cmbCategorie.setDisable(true);
+            txtPrix.setDisable(true);
+            txtDescription.setDisable(true);
+            
+            // Le statut reste modifiable
+            cmbStatut.setDisable(false);
+        }
     }
 
     private void setupLayout() {
@@ -324,13 +357,25 @@ public class ChambreView extends VBox {
         }
         
         try {
-            selected.setCategorie(cmbCategorie.getValue());
-            selected.setStatut(cmbStatut.getValue());
-            selected.setPrixNuit(Double.parseDouble(txtPrix.getText()));
-            selected.setDescription(txtDescription.getText());
+            boolean isReceptionniste = AuthenticationService.getUtilisateurConnecte() != null &&
+                                       AuthenticationService.getUtilisateurConnecte().getRole() == RoleUtilisateur.RECEPTIONNISTE;
             
-            controller.updateChambre(selected);
-            showSuccess("Chambre modifiée avec succès");
+            if (isReceptionniste) {
+                // Les réceptionnistes ne peuvent modifier que le statut
+                selected.setStatut(cmbStatut.getValue());
+                // Utiliser updateChambreStatut au lieu de updateChambre
+                controller.updateChambreStatut(selected.getNumeroChambre(), selected.getStatut());
+                showSuccess("Statut de la chambre modifié avec succès");
+            } else {
+                // Les admins peuvent tout modifier
+                selected.setCategorie(cmbCategorie.getValue());
+                selected.setStatut(cmbStatut.getValue());
+                selected.setPrixNuit(Double.parseDouble(txtPrix.getText()));
+                selected.setDescription(txtDescription.getText());
+                
+                controller.updateChambre(selected);
+                showSuccess("Chambre modifiée avec succès");
+            }
             clearForm();
             loadChambres();
         } catch (Exception e) {

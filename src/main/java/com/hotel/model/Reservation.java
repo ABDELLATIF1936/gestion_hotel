@@ -22,6 +22,8 @@ public class Reservation {
     private Statut statut;
     private int nbPersonnes;
     private String notes;
+    private LocalDate checkIn;
+    private LocalDate checkOut;
 
     // Constructeurs
     public Reservation() {
@@ -131,6 +133,49 @@ public class Reservation {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public LocalDate getCheckIn() {
+        return checkIn;
+    }
+
+    public void setCheckIn(LocalDate checkIn) throws ValidationException {
+        if (checkIn != null && dateDebut != null && checkIn.isBefore(dateDebut)) {
+            throw new ValidationException("La date de check-in ne peut pas être avant la date de début de réservation");
+        }
+        this.checkIn = checkIn;
+    }
+    
+    /**
+     * Définit la date de check-in sans validation (pour le chargement depuis la base de données).
+     * @param checkIn la date de check-in
+     */
+    public void setCheckInFromDB(LocalDate checkIn) {
+        this.checkIn = checkIn;
+    }
+
+    public LocalDate getCheckOut() {
+        return checkOut;
+    }
+
+    public void setCheckOut(LocalDate checkOut) throws ValidationException {
+        if (checkOut != null) {
+            if (dateFin != null && checkOut.isAfter(dateFin)) {
+                throw new ValidationException("La date de check-out ne peut pas être après la date de fin de réservation");
+            }
+            if (checkIn != null && checkOut.isBefore(checkIn)) {
+                throw new ValidationException("La date de check-out ne peut pas être avant la date de check-in");
+            }
+        }
+        this.checkOut = checkOut;
+    }
+    
+    /**
+     * Définit la date de check-out sans validation (pour le chargement depuis la base de données).
+     * @param checkOut la date de check-out
+     */
+    public void setCheckOutFromDB(LocalDate checkOut) {
+        this.checkOut = checkOut;
     }
 
     /**

@@ -97,7 +97,7 @@ public class GestionUtilisateursView extends VBox {
         });
         
         cmbRole = new ComboBox<>();
-        cmbRole.getItems().addAll(RoleUtilisateur.ADMIN, RoleUtilisateur.RECEPTIONNISTE, RoleUtilisateur.ENTRETIEN);
+        cmbRole.getItems().addAll(RoleUtilisateur.ADMIN, RoleUtilisateur.RECEPTIONNISTE);
         cmbRole.setValue(RoleUtilisateur.RECEPTIONNISTE);
         
         // TableView

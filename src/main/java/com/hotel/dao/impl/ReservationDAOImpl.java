@@ -20,8 +20,17 @@ public class ReservationDAOImpl implements IReservationDAO {
 
     @Override
     public int create(Reservation reservation) throws DAOException {
-        String sql = "INSERT INTO reservation (idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        // Vérifier si les colonnes check_in et check_out existent
+        boolean hasCheckInOut = checkColumnsExist();
+        
+        String sql;
+        if (hasCheckInOut) {
+            sql = "INSERT INTO reservation (idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes, check_in, check_out) " +
+                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        } else {
+            sql = "INSERT INTO reservation (idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes) " +
+                  "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        }
         
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -33,6 +42,11 @@ public class ReservationDAOImpl implements IReservationDAO {
             statement.setString(5, reservation.getStatutAsString());
             statement.setInt(6, reservation.getNbPersonnes());
             statement.setString(7, reservation.getNotes());
+            
+            if (hasCheckInOut) {
+                statement.setDate(8, reservation.getCheckIn() != null ? Date.valueOf(reservation.getCheckIn()) : null);
+                statement.setDate(9, reservation.getCheckOut() != null ? Date.valueOf(reservation.getCheckOut()) : null);
+            }
             
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected == 0) {
@@ -70,7 +84,8 @@ public class ReservationDAOImpl implements IReservationDAO {
             
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return mapResultSetToReservation(resultSet);
+                    boolean hasCheckInOut = checkColumnsExist();
+                    return mapResultSetToReservation(resultSet, hasCheckInOut);
                 }
                 return null;
             }
@@ -85,7 +100,15 @@ public class ReservationDAOImpl implements IReservationDAO {
 
     @Override
     public List<Reservation> findAll() throws DAOException {
-        String sql = "SELECT * FROM reservation ORDER BY dateDebut DESC";
+        // Utiliser une requête explicite pour éviter les problèmes avec les colonnes manquantes
+        boolean hasCheckInOut = checkColumnsExist();
+        String sql;
+        if (hasCheckInOut) {
+            sql = "SELECT idReservation, idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes, check_in, check_out FROM reservation ORDER BY dateDebut DESC";
+        } else {
+            sql = "SELECT idReservation, idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes FROM reservation ORDER BY dateDebut DESC";
+        }
+        
         List<Reservation> reservations = new ArrayList<>();
         
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
@@ -93,12 +116,12 @@ public class ReservationDAOImpl implements IReservationDAO {
              ResultSet resultSet = statement.executeQuery()) {
             
             while (resultSet.next()) {
-                reservations.add(mapResultSetToReservation(resultSet));
+                reservations.add(mapResultSetToReservation(resultSet, hasCheckInOut));
             }
             return reservations;
         } catch (DatabaseException e) {
             logger.error("Erreur de connexion", e);
-            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+            throw new DAOException("Erreur de connexion à la base de données: " + e.getMessage(), e);
         } catch (SQLException e) {
             logger.error("Erreur lors de la récupération de toutes les réservations", e);
             throw new DAOException("Erreur lors de la récupération des réservations: " + e.getMessage(), e);
@@ -245,8 +268,17 @@ public class ReservationDAOImpl implements IReservationDAO {
 
     @Override
     public boolean update(Reservation reservation) throws DAOException {
-        String sql = "UPDATE reservation SET idClient = ?, numeroChambre = ?, dateDebut = ?, dateFin = ?, " +
-                     "statut = ?, nbPersonnes = ?, notes = ? WHERE idReservation = ?";
+        // Vérifier si les colonnes check_in et check_out existent
+        boolean hasCheckInOut = checkColumnsExist();
+        
+        String sql;
+        if (hasCheckInOut) {
+            sql = "UPDATE reservation SET idClient = ?, numeroChambre = ?, dateDebut = ?, dateFin = ?, " +
+                  "statut = ?, nbPersonnes = ?, notes = ?, check_in = ?, check_out = ? WHERE idReservation = ?";
+        } else {
+            sql = "UPDATE reservation SET idClient = ?, numeroChambre = ?, dateDebut = ?, dateFin = ?, " +
+                  "statut = ?, nbPersonnes = ?, notes = ? WHERE idReservation = ?";
+        }
         
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -258,7 +290,14 @@ public class ReservationDAOImpl implements IReservationDAO {
             statement.setString(5, reservation.getStatutAsString());
             statement.setInt(6, reservation.getNbPersonnes());
             statement.setString(7, reservation.getNotes());
-            statement.setInt(8, reservation.getIdReservation());
+            
+            if (hasCheckInOut) {
+                statement.setDate(8, reservation.getCheckIn() != null ? Date.valueOf(reservation.getCheckIn()) : null);
+                statement.setDate(9, reservation.getCheckOut() != null ? Date.valueOf(reservation.getCheckOut()) : null);
+                statement.setInt(10, reservation.getIdReservation());
+            } else {
+                statement.setInt(8, reservation.getIdReservation());
+            }
             
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {
@@ -313,6 +352,22 @@ public class ReservationDAOImpl implements IReservationDAO {
     private Reservation mapResultSetToReservation(ResultSet resultSet) throws SQLException {
         Reservation reservation = new Reservation();
         try {
+            // Détecter automatiquement si les colonnes check_in et check_out existent
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            boolean hasCheckIn = false;
+            boolean hasCheckOut = false;
+            
+            int columnCount = metaData.getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i).toLowerCase();
+                if (columnName.equals("check_in")) {
+                    hasCheckIn = true;
+                }
+                if (columnName.equals("check_out")) {
+                    hasCheckOut = true;
+                }
+            }
+            
             reservation.setIdReservation(resultSet.getInt("idReservation"));
             reservation.setIdClient(resultSet.getInt("idClient"));
             reservation.setNumeroChambre(resultSet.getInt("numeroChambre"));
@@ -334,11 +389,64 @@ public class ReservationDAOImpl implements IReservationDAO {
             
             String notes = resultSet.getString("notes");
             reservation.setNotes(notes != null ? notes : "");
+            
+            // Gérer check_in et check_out seulement si les colonnes existent
+            if (hasCheckIn) {
+                Date checkIn = resultSet.getDate("check_in");
+                if (checkIn != null) {
+                    reservation.setCheckInFromDB(checkIn.toLocalDate());
+                }
+            }
+            
+            if (hasCheckOut) {
+                Date checkOut = resultSet.getDate("check_out");
+                if (checkOut != null) {
+                    reservation.setCheckOutFromDB(checkOut.toLocalDate());
+                }
+            }
         } catch (Exception e) {
             logger.error("Erreur lors du mapping du ResultSet vers Reservation", e);
             throw new SQLException("Erreur lors du mapping: " + e.getMessage(), e);
         }
         return reservation;
+    }
+    
+    /**
+     * Mappe un ResultSet vers un objet Reservation (version avec paramètre hasCheckInOut pour compatibilité).
+     *
+     * @param resultSet le ResultSet à mapper
+     * @param hasCheckInOut indique si les colonnes check_in et check_out existent (ignoré, détection automatique utilisée)
+     * @return un objet Reservation
+     * @throws SQLException si une erreur SQL survient
+     */
+    private Reservation mapResultSetToReservation(ResultSet resultSet, boolean hasCheckInOut) throws SQLException {
+        // Utiliser la détection automatique au lieu du paramètre
+        return mapResultSetToReservation(resultSet);
+    }
+    
+    /**
+     * Vérifie si les colonnes check_in et check_out existent dans la table reservation.
+     * @return true si les colonnes existent, false sinon
+     */
+    private boolean checkColumnsExist() {
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                 "WHERE TABLE_SCHEMA = DATABASE() " +
+                 "AND TABLE_NAME = 'reservation' " +
+                 "AND COLUMN_NAME IN ('check_in', 'check_out')")) {
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count == 2; // Les deux colonnes doivent exister
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Erreur lors de la vérification des colonnes check_in/check_out, supposons qu'elles n'existent pas: " + e.getMessage());
+            return false;
+        }
+        return false;
     }
 }
 

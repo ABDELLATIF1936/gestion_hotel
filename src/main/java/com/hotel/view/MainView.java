@@ -30,6 +30,7 @@ public class MainView extends BorderPane {
     private Button btnServices;
     private Button btnEntretien;
     private Button btnUtilisateurs;
+    private Button btnEmployes;
     private Button btnParametres;
     private Button btnDeconnexion;
     
@@ -46,6 +47,7 @@ public class MainView extends BorderPane {
     private ServiceView serviceView;
     private EntretienView entretienView;
     private GestionUtilisateursView gestionUtilisateursView;
+    private GestionEmployesView gestionEmployesView;
     private ParametresView parametresView;
 
     public MainView() {
@@ -82,6 +84,7 @@ public class MainView extends BorderPane {
         btnServices = new Button("⭐ Services");
         btnEntretien = new Button("🔧 Entretien");
         btnUtilisateurs = new Button("👤 Utilisateurs");
+        btnEmployes = new Button("👥 Employés");
         btnParametres = new Button("⚙️ Paramètres");
         btnDeconnexion = new Button("🚪 Déconnexion");
         
@@ -116,6 +119,7 @@ public class MainView extends BorderPane {
             btnEntretien,
             new Separator(),
             btnUtilisateurs,
+            btnEmployes,
             btnParametres,
             new Separator(),
             btnDeconnexion
@@ -168,6 +172,7 @@ public class MainView extends BorderPane {
         btnServices.setStyle(buttonStyle);
         btnEntretien.setStyle(buttonStyle);
         btnUtilisateurs.setStyle(buttonStyle);
+        btnEmployes.setStyle(buttonStyle);
         btnParametres.setStyle(buttonStyle);
         
         // Style spécial pour le bouton de déconnexion
@@ -190,6 +195,7 @@ public class MainView extends BorderPane {
         setupButtonHover(btnServices, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnEntretien, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnUtilisateurs, buttonStyle, buttonHoverStyle);
+        setupButtonHover(btnEmployes, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnParametres, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnDeconnexion, logoutStyle, "-fx-background-color: #c0392b; -fx-text-fill: white;");
         
@@ -214,6 +220,7 @@ public class MainView extends BorderPane {
         btnServices.setOnAction(e -> showServices());
         btnEntretien.setOnAction(e -> showEntretien());
         btnUtilisateurs.setOnAction(e -> showUtilisateurs());
+        btnEmployes.setOnAction(e -> showEmployes());
         btnParametres.setOnAction(e -> showParametres());
         btnDeconnexion.setOnAction(e -> handleDeconnexion());
     }
@@ -245,14 +252,21 @@ public class MainView extends BorderPane {
         btnEntretien.setVisible(AuthenticationService.hasPermission("gestion.entretien"));
         btnEntretien.setManaged(AuthenticationService.hasPermission("gestion.entretien"));
         
-        // Bouton Utilisateurs visible uniquement pour les admins
+        // Boutons visibles uniquement pour les admins
         boolean isAdmin = utilisateurConnecte.getRole() == RoleUtilisateur.ADMIN;
         btnUtilisateurs.setVisible(isAdmin);
         btnUtilisateurs.setManaged(isAdmin);
+        btnEmployes.setVisible(isAdmin);
+        btnEmployes.setManaged(isAdmin);
         
         // Bouton Paramètres visible pour tous
         btnParametres.setVisible(true);
         btnParametres.setManaged(true);
+        
+        // Bouton Entretien visible pour les réceptionnistes (plus seulement pour ENTRETIEN)
+        boolean isReceptionniste = utilisateurConnecte.getRole() == RoleUtilisateur.RECEPTIONNISTE;
+        btnEntretien.setVisible(isReceptionniste || isAdmin);
+        btnEntretien.setManaged(isReceptionniste || isAdmin);
     }
     
     /**
@@ -400,6 +414,20 @@ public class MainView extends BorderPane {
         btnUtilisateurs.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
+    private void showEmployes() {
+        currentModuleLabel.setText("👥 Gestion des Employés");
+        contentArea.getChildren().clear();
+        // Rafraîchir les données avant d'afficher
+        if (gestionEmployesView != null) {
+            gestionEmployesView.refreshData();
+        } else {
+            gestionEmployesView = new GestionEmployesView();
+        }
+        contentArea.getChildren().add(gestionEmployesView);
+        resetButtonStyles();
+        btnEmployes.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+    }
+
     private void showParametres() {
         currentModuleLabel.setText("⚙️ Paramètres du compte");
         contentArea.getChildren().clear();
@@ -424,6 +452,7 @@ public class MainView extends BorderPane {
         btnServices.setStyle(normalStyle);
         btnEntretien.setStyle(normalStyle);
         btnUtilisateurs.setStyle(normalStyle);
+        btnEmployes.setStyle(normalStyle);
         btnParametres.setStyle(normalStyle);
     }
 }

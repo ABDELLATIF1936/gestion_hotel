@@ -39,6 +39,8 @@ public class ReservationView extends VBox {
     private TextField txtNumeroChambre;
     private DatePicker dpDateDebut;
     private DatePicker dpDateFin;
+    private DatePicker dpCheckIn;
+    private DatePicker dpCheckOut;
     private TextField txtNbPersonnes;
     private ComboBox<Reservation.Statut> cmbStatut;
     private TextArea txtNotes;
@@ -97,6 +99,12 @@ public class ReservationView extends VBox {
         
         dpDateFin = new DatePicker();
         dpDateFin.setValue(LocalDate.now().plusDays(1));
+        
+        dpCheckIn = new DatePicker();
+        dpCheckIn.setPromptText("Date d'arrivée réelle");
+        
+        dpCheckOut = new DatePicker();
+        dpCheckOut.setPromptText("Date de départ réelle");
         
         txtNbPersonnes = new TextField();
         txtNbPersonnes.setText("1");
@@ -293,6 +301,10 @@ public class ReservationView extends VBox {
         form.add(cmbStatut, 1, 5);
         form.add(new Label("Notes:"), 0, 6);
         form.add(txtNotes, 1, 6);
+        form.add(new Label("Check-in:"), 0, 7);
+        form.add(dpCheckIn, 1, 7);
+        form.add(new Label("Check-out:"), 0, 8);
+        form.add(dpCheckOut, 1, 8);
         
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPrefWidth(120);
@@ -573,6 +585,8 @@ public class ReservationView extends VBox {
         txtNumeroChambre.setText(String.valueOf(reservation.getNumeroChambre()));
         dpDateDebut.setValue(reservation.getDateDebut());
         dpDateFin.setValue(reservation.getDateFin());
+        dpCheckIn.setValue(reservation.getCheckIn());
+        dpCheckOut.setValue(reservation.getCheckOut());
         txtNbPersonnes.setText(String.valueOf(reservation.getNbPersonnes()));
         cmbStatut.setValue(reservation.getStatut());
         txtNotes.setText(reservation.getNotes() != null ? reservation.getNotes() : "");
@@ -609,6 +623,8 @@ public class ReservationView extends VBox {
         txtNumeroChambre.clear();
         dpDateDebut.setValue(LocalDate.now());
         dpDateFin.setValue(LocalDate.now().plusDays(1));
+        dpCheckIn.setValue(null);
+        dpCheckOut.setValue(null);
         txtNbPersonnes.setText("1");
         cmbStatut.setValue(Reservation.Statut.EN_ATTENTE);
         txtNotes.clear();
@@ -750,6 +766,8 @@ public class ReservationView extends VBox {
             reservation.setNumeroChambre(Integer.parseInt(txtNumeroChambre.getText().trim()));
             reservation.setDateDebut(dpDateDebut.getValue());
             reservation.setDateFin(dpDateFin.getValue());
+            reservation.setCheckIn(dpCheckIn.getValue());
+            reservation.setCheckOut(dpCheckOut.getValue());
             reservation.setNbPersonnes(Integer.parseInt(txtNbPersonnes.getText().trim()));
             reservation.setStatut(cmbStatut.getValue());
             reservation.setNotes(txtNotes.getText() != null ? txtNotes.getText().trim() : "");
@@ -811,6 +829,8 @@ public class ReservationView extends VBox {
             selected.setNumeroChambre(Integer.parseInt(txtNumeroChambre.getText().trim()));
             selected.setDateDebut(dpDateDebut.getValue());
             selected.setDateFin(dpDateFin.getValue());
+            selected.setCheckIn(dpCheckIn.getValue());
+            selected.setCheckOut(dpCheckOut.getValue());
             selected.setNbPersonnes(Integer.parseInt(txtNbPersonnes.getText().trim()));
             selected.setStatut(cmbStatut.getValue());
             selected.setNotes(txtNotes.getText() != null ? txtNotes.getText().trim() : "");

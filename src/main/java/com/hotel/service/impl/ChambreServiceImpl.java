@@ -15,6 +15,8 @@ import com.hotel.util.Logger;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +24,16 @@ import java.util.stream.Collectors;
  */
 public class ChambreServiceImpl implements IChambreService {
     private static final Logger logger = Logger.getLogger(ChambreServiceImpl.class);
+    
+    /**
+     * Mémorise le statut précédent d'une chambre avant de la passer en HORS_SERVICE
+     * à cause d'un entretien actif. Cela permet de restaurer ce statut lorsque
+     * tous les entretiens de la chambre sont terminés ou supprimés.
+     *
+     * Clé   : numéro de chambre
+     * Valeur: dernier statut avant HORS_SERVICE
+     */
+    private static final Map<Integer, Chambre.Statut> previousStatusMap = new ConcurrentHashMap<>();
     private final IChambreDAO chambreDAO;
     private final ITacheEntretienDAO tacheEntretienDAO;
     private final IReservationDAO reservationDAO;
@@ -165,12 +177,33 @@ public class ChambreServiceImpl implements IChambreService {
             
             // Si au moins un entretien est actif, la chambre est HORS_SERVICE
             if (!tachesActives.isEmpty()) {
+                // Récupérer le statut actuel de la chambre pour pouvoir le restaurer plus tard
+                try {
+                    Chambre chambreActuelle = chambreDAO.findByNumero(numeroChambre);
+                    if (chambreActuelle != null && chambreActuelle.getStatut() != Chambre.Statut.HORS_SERVICE) {
+                        // On mémorise uniquement si on n'est pas déjà en HORS_SERVICE
+                        previousStatusMap.put(numeroChambre, chambreActuelle.getStatut());
+                        logger.info("Statut précédent de la chambre " + numeroChambre + " mémorisé: " + chambreActuelle.getStatut());
+                    }
+                } catch (DAOException e) {
+                    logger.warn("Impossible de récupérer le statut actuel de la chambre " + numeroChambre + " avant de la passer en HORS_SERVICE", e);
+                }
+
                 updateChambreStatut(numeroChambre, Chambre.Statut.HORS_SERVICE);
                 logger.info("Chambre " + numeroChambre + " mise HORS_SERVICE (" + tachesActives.size() + " entretien(s) actif(s))");
                 return Chambre.Statut.HORS_SERVICE;
             }
             
-            // Sinon, vérifier les réservations
+            // S'il n'y a plus d'entretien actif, vérifier d'abord si un statut précédent a été mémorisé.
+            // Cela permet de revenir à l'état exact d'avant l'entretien (ex: OCCUPEE, RESERVEE, etc.).
+            if (previousStatusMap.containsKey(numeroChambre)) {
+                Chambre.Statut statutPrecedent = previousStatusMap.remove(numeroChambre);
+                updateChambreStatut(numeroChambre, statutPrecedent);
+                logger.info("Chambre " + numeroChambre + " restaurée à son statut précédent: " + statutPrecedent);
+                return statutPrecedent;
+            }
+
+            // Sinon, vérifier les réservations pour recalculer le statut
             LocalDate aujourdhui = LocalDate.now();
             List<Reservation> reservations = reservationDAO.findByChambre(numeroChambre);
             

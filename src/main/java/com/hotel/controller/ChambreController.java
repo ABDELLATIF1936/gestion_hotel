@@ -71,4 +71,13 @@ public class ChambreController {
             throw e;
         }
     }
+
+    public void updateChambreStatut(int numero, Chambre.Statut statut) throws Exception {
+        try {
+            chambreService.updateChambreStatut(numero, statut);
+        } catch (Exception e) {
+            logger.error("Erreur lors de la mise à jour du statut de la chambre", e);
+            throw e;
+        }
+    }
 }

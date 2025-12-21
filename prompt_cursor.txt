@@ -1,25 +1,11 @@
-Une chambre peut avoir plusieurs entretiens dans le temps.
+Modifier et ajouter dans l'application les fonctionnalités suivantes :
 
-Si au moins un entretien est actif (en cours ou planifié sur la période courante), alors :
+1. L'administrateur doit gérer les employés, pas seulement les utilisateurs.
 
-le statut de la chambre = HORS_SERVICE
+2. Il n'y a pas de compte "entretien" ni d'utilisateur "entretien", seulement "réception" et "administrateur". Il faut donc ajouter une page "Entretien" dans l'interface du réceptionniste.
 
-la chambre est non réservable
+3. Le réceptionniste peut seulement consulter les chambres sans modifier ou ajouter ou supprimer aucun chambre, avec la possibilité de changer uniquement le statut de la chambre.
 
-S’il n’existe aucun entretien actif pour la chambre :
+4. Un service qui est inactif ne doit pas s'afficher dans la partie "services" lors d'une réservation.
 
-le statut dépend des réservations :
-
-réservée → RÉSERVÉE
-
-occupée → OCCUPÉE
-
-sinon → DISPONIBLE
-
-La fin d’un entretien déclenche automatiquement :
-
-la réévaluation du statut de la chambre
-
-le retour à DISPONIBLE uniquement s’il n’y a ni réservation ni occupation
-
-Un entretien n’affecte pas l’historique des réservations, mais bloque toute nouvelle réservation pendant sa durée.
+5. Ajouter deux colonnes dans la table "reservation" de la base de données pour "check_in" et "check_out", pour déterminer la date d'occupation de la chambre par le client et la date de fin d'occupation. La déclaration de "check_in" et "check_out" se fait dans la page de réservation.

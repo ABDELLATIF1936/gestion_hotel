@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,71 @@ public class DatabaseSetup {
     public static void setupDatabase() {
         setupAuthentication();
         updateChambreStatutEnum();
+        addCheckInOutColumns();
+    }
+    
+    /**
+     * Ajoute les colonnes check_in et check_out à la table reservation si elles n'existent pas.
+     */
+    public static void addCheckInOutColumns() {
+        try {
+            logger.info("Vérification des colonnes check_in et check_out...");
+            
+            Connection connection = DatabaseConnection.getInstance().getConnection();
+            try (Statement statement = connection.createStatement()) {
+                // Vérifier si les colonnes existent déjà
+                String checkSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                                "WHERE TABLE_SCHEMA = DATABASE() " +
+                                "AND TABLE_NAME = 'reservation' " +
+                                "AND COLUMN_NAME IN ('check_in', 'check_out')";
+                
+                try (ResultSet rs = statement.executeQuery(checkSql)) {
+                    if (rs.next() && rs.getInt(1) == 2) {
+                        logger.debug("Les colonnes check_in et check_out existent déjà");
+                        return;
+                    }
+                }
+                
+                // Ajouter les colonnes si elles n'existent pas
+                String sql = "ALTER TABLE reservation " +
+                            "ADD COLUMN IF NOT EXISTS check_in DATE NULL AFTER notes, " +
+                            "ADD COLUMN IF NOT EXISTS check_out DATE NULL AFTER check_in";
+                
+                try {
+                    statement.execute(sql);
+                    connection.commit();
+                    logger.info("Colonnes check_in et check_out ajoutées avec succès!");
+                } catch (Exception e) {
+                    // MySQL ne supporte pas IF NOT EXISTS dans ALTER TABLE, utiliser une approche différente
+                    if (e.getMessage().contains("Duplicate column") || e.getMessage().contains("already exists")) {
+                        logger.debug("Les colonnes existent déjà");
+                    } else {
+                        // Essayer sans IF NOT EXISTS
+                        try {
+                            statement.execute("ALTER TABLE reservation ADD COLUMN check_in DATE NULL AFTER notes");
+                            connection.commit();
+                            logger.info("Colonne check_in ajoutée");
+                        } catch (Exception e2) {
+                            if (!e2.getMessage().contains("Duplicate column")) {
+                                logger.warn("Erreur lors de l'ajout de check_in: " + e2.getMessage());
+                            }
+                        }
+                        
+                        try {
+                            statement.execute("ALTER TABLE reservation ADD COLUMN check_out DATE NULL AFTER check_in");
+                            connection.commit();
+                            logger.info("Colonne check_out ajoutée");
+                        } catch (Exception e2) {
+                            if (!e2.getMessage().contains("Duplicate column")) {
+                                logger.warn("Erreur lors de l'ajout de check_out: " + e2.getMessage());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'ajout des colonnes check_in/check_out", e);
+        }
     }
 
     /**
