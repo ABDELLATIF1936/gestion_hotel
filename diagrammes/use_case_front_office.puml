@@ -1,0 +1,42 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Réceptionniste" as Rec
+actor "Administrateur" as Admin
+
+' Inheritance
+Admin --|> Rec
+
+package "Gestion des Clients" {
+    usecase "Créer un Client" as CreateClient
+    usecase "Modifier un Client" as EditClient
+    usecase "Supprimer un Client" as DeleteClient
+    usecase "Rechercher un Client" as SearchClient
+}
+
+package "Gestion des Réservations" {
+    usecase "Créer une Réservation" as CreateRes
+    usecase "Modifier une Réservation" as EditRes
+    usecase "Annuler une Réservation" as CancelRes
+    usecase "Effectuer Check-in" as CheckIn
+    usecase "Effectuer Check-out" as CheckOut
+    usecase "Voir Calendrier / Disponibilités" as ViewCal
+}
+
+' Links
+Rec --> CreateClient
+Rec --> EditClient
+Rec --> SearchClient
+Rec --> CreateRes
+Rec --> EditRes
+Rec --> CancelRes
+Rec --> CheckIn
+Rec --> CheckOut
+Rec --> ViewCal
+
+' Admin exclusive
+Admin --> DeleteClient
+
+@enduml

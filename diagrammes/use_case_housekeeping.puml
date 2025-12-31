@@ -1,0 +1,43 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Réceptionniste" as Rec
+actor "Administrateur" as Admin
+
+' Inheritance
+Admin --|> Rec
+
+package "Gestion des Chambres" {
+    usecase "Consulter la liste des Chambres" as ViewRooms
+    usecase "Changer le Statut (Nettoyage/Dispo)" as ChangeRoomStatus
+    usecase "Créer une Chambre" as CreateRoom
+    usecase "Modifier une Chambre" as EditRoom
+    usecase "Supprimer une Chambre" as DeleteRoom
+}
+
+package "Maintenance & Entretien" {
+    usecase "Signaler un Problème" as ReportIssue
+    usecase "Mettre à jour Statut Ticket" as UpdateTicket
+    usecase "Voir Dashboard Entretien" as ViewMaintDash
+    usecase "Supprimer Ticket" as DeleteTicket
+}
+
+' Links
+Rec --> ViewRooms
+Rec --> ChangeRoomStatus
+Rec --> ReportIssue
+Rec --> UpdateTicket
+Rec --> ViewMaintDash
+
+' Admin exclusive
+Admin --> CreateRoom
+Admin --> EditRoom
+Admin --> DeleteRoom
+Admin --> DeleteTicket
+
+note "Les Réceptionnistes ne peuvent\nPAS créer/supprimer des chambres." as N1
+ViewRooms .. N1
+
+@enduml

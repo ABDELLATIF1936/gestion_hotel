@@ -5,8 +5,7 @@ package com.hotel.model;
  */
 public enum RoleUtilisateur {
     ADMIN("ADMIN", "Administrateur"),
-    RECEPTIONNISTE("RECEPTIONNISTE", "Réceptionniste"),
-    ENTRETIEN("ENTRETIEN", "Personnel d'entretien");
+    RECEPTIONNISTE("RECEPTIONNISTE", "Réceptionniste");
 
     private final String role;
     private final String libelle;
@@ -35,7 +34,7 @@ public enum RoleUtilisateur {
         if (role == null) {
             throw new IllegalArgumentException("Le rôle ne peut pas être null");
         }
-        
+
         String roleUpper = role.toUpperCase().trim();
         for (RoleUtilisateur r : values()) {
             if (r.role.equals(roleUpper)) {
@@ -45,5 +44,3 @@ public enum RoleUtilisateur {
         throw new IllegalArgumentException("Rôle non reconnu: " + role);
     }
 }
-
-

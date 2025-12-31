@@ -1,0 +1,32 @@
+@startuml
+scale 600 width
+
+[*] --> DISPONIBLE
+
+state DISPONIBLE {
+   note right: Prête à être louée
+}
+
+DISPONIBLE --> RESERVEE : Réservation confirmée
+RESERVEE --> OCCUPEE : Check-in Client
+DISPONIBLE --> OCCUPEE : Check-in Walk-in
+
+state OCCUPEE {
+   note right: Client dans la chambre
+}
+
+OCCUPEE --> EN_NETTOYAGE : Check-out
+EN_NETTOYAGE --> DISPONIBLE : Nettoyage terminé
+
+state HORS_SERVICE {
+   note right: Panne ou Maintenance
+}
+
+DISPONIBLE --> HORS_SERVICE : Panne signalée
+OCCUPEE --> HORS_SERVICE : Panne grave
+EN_NETTOYAGE --> HORS_SERVICE : Problème détecté
+
+HORS_SERVICE --> EN_NETTOYAGE : Réparation terminée
+HORS_SERVICE --> DISPONIBLE : Réparation mineure terminée
+
+@enduml

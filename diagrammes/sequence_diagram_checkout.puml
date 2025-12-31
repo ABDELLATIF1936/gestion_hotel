@@ -1,0 +1,52 @@
+@startuml
+actor "Réceptionniste" as Staff
+participant "ReservationView" as View
+participant "ReservationController" as ResController
+participant "FactureController" as BillController
+participant "FactureService" as BillService
+participant "DAO Module" as DAO
+
+Staff -> View : Click "Check-out"
+activate View
+View -> ResController : checkOut(idReservation)
+activate ResController
+
+ResController -> DAO : updateStatut(TERMINEE)
+ResController --> View : Confirmation Check-out
+deactivate ResController
+
+View -> View : Show "Générer Facture ?"
+Staff -> View : Click "Oui"
+
+View -> BillController : generateFacture(idReservation)
+activate BillController
+
+BillController -> BillService : createFactureFromReservation(idReservation)
+activate BillService
+
+BillService -> DAO : getReservation(id)
+activate DAO
+DAO --> BillService : Reservation
+deactivate DAO
+
+BillService -> DAO : getServices(id)
+activate DAO
+DAO --> BillService : List<Service>
+deactivate DAO
+
+BillService -> BillService : calculateTotal(roomPrice, services)
+
+BillService -> DAO : createFacture(facture)
+activate DAO
+DAO --> BillService : idFacture
+deactivate DAO
+
+BillService --> BillController : Facture
+deactivate BillService
+
+BillController --> View : Display Facture
+deactivate BillController
+
+View --> Staff : Affiche Aperçu Facture
+deactivate View
+@enduml

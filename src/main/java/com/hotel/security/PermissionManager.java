@@ -12,7 +12,7 @@ import java.util.Set;
  */
 public class PermissionManager {
     private static final Map<RoleUtilisateur, Set<String>> PERMISSIONS = new HashMap<>();
-    
+
     static {
         // Permissions ADMINISTRATEUR
         Set<String> adminPerms = new HashSet<>();
@@ -27,7 +27,7 @@ public class PermissionManager {
         adminPerms.add("voir.statistiques");
         adminPerms.add("voir.rapports");
         PERMISSIONS.put(RoleUtilisateur.ADMIN, adminPerms);
-        
+
         // Permissions RÉCEPTIONNISTE
         Set<String> receptionPerms = new HashSet<>();
         receptionPerms.add("gestion.reservations");
@@ -37,19 +37,13 @@ public class PermissionManager {
         receptionPerms.add("gestion.services");
         receptionPerms.add("voir.statistiques");
         PERMISSIONS.put(RoleUtilisateur.RECEPTIONNISTE, receptionPerms);
-        
-        // Permissions PERSONNEL D'ENTRETIEN
-        Set<String> entretienPerms = new HashSet<>();
-        entretienPerms.add("gestion.entretien");
-        entretienPerms.add("gestion.chambres");
-        entretienPerms.add("voir.taches");
-        PERMISSIONS.put(RoleUtilisateur.ENTRETIEN, entretienPerms);
+
     }
-    
+
     /**
      * Vérifie si un rôle a une permission spécifique.
      *
-     * @param role le rôle à vérifier
+     * @param role       le rôle à vérifier
      * @param permission la permission à vérifier
      * @return true si le rôle a la permission
      */
@@ -57,11 +51,11 @@ public class PermissionManager {
         if (role == null || permission == null) {
             return false;
         }
-        
+
         Set<String> rolePerms = PERMISSIONS.get(role);
         return rolePerms != null && rolePerms.contains(permission);
     }
-    
+
     /**
      * Récupère toutes les permissions d'un rôle.
      *
@@ -73,5 +67,3 @@ public class PermissionManager {
         return perms != null ? new HashSet<>(perms) : new HashSet<>();
     }
 }
-
-

@@ -24,9 +24,9 @@ import java.util.List;
  */
 public class ChambreView extends VBox {
     private static final Logger logger = Logger.getLogger(ChambreView.class);
-    
+
     private ChambreController controller;
-    
+
     // Composants du formulaire
     private TextField txtNumero;
     private ComboBox<Chambre.Categorie> cmbCategorie;
@@ -34,11 +34,11 @@ public class ChambreView extends VBox {
     private TextField txtPrix;
     private TextArea txtDescription;
     private TextField txtSearch;
-    
+
     // TableView
     private TableView<Chambre> tableView;
     private ObservableList<Chambre> chambreList;
-    
+
     // Boutons
     private Button btnAjouter;
     private Button btnModifier;
@@ -46,7 +46,7 @@ public class ChambreView extends VBox {
     private Button btnRechercher;
     private Button btnReinitialiser;
     private Button btnDisponibles;
-    
+
     // Labels de statut
     private Label lblStatus;
 
@@ -56,7 +56,9 @@ public class ChambreView extends VBox {
             initializeComponents();
             setupLayout();
             setupStyles();
+            setupStyles();
             setupEventHandlers();
+            adaptInterfaceToRole(); // Apply permissions
             loadChambres();
         } catch (Exception e) {
             logger.error("Erreur lors de l'initialisation de ChambreView", e);
@@ -68,49 +70,49 @@ public class ChambreView extends VBox {
         // Champs de formulaire
         txtNumero = new TextField();
         txtNumero.setPromptText("Numéro de chambre");
-        
+
         cmbCategorie = new ComboBox<>();
         cmbCategorie.getItems().addAll(Chambre.Categorie.values());
         cmbCategorie.setValue(Chambre.Categorie.SIMPLE);
-        
+
         cmbStatut = new ComboBox<>();
         cmbStatut.getItems().addAll(Chambre.Statut.values());
         cmbStatut.setValue(Chambre.Statut.DISPONIBLE);
-        
+
         txtPrix = new TextField();
         txtPrix.setPromptText("Prix par nuit");
-        
+
         txtDescription = new TextArea();
         txtDescription.setPromptText("Description de la chambre");
         txtDescription.setPrefRowCount(3);
-        
+
         txtSearch = new TextField();
         txtSearch.setPromptText("Rechercher par numéro...");
-        
+
         // TableView
         tableView = new TableView<>();
         chambreList = FXCollections.observableArrayList();
         tableView.setItems(chambreList);
-        
+
         // Colonnes
         TableColumn<Chambre, Integer> colNumero = new TableColumn<>("Numéro");
         colNumero.setCellValueFactory(new PropertyValueFactory<>("numeroChambre"));
         TableViewHelper.configureFixedColumn(colNumero, 80);
-        
+
         TableColumn<Chambre, String> colCategorie = new TableColumn<>("Catégorie");
         colCategorie.setCellValueFactory(cellData -> {
             Chambre.Categorie cat = cellData.getValue().getCategorie();
             return new javafx.beans.property.SimpleStringProperty(cat != null ? cat.name() : "");
         });
         TableViewHelper.configureFlexibleColumn(colCategorie, 90, 120);
-        
+
         TableColumn<Chambre, String> colStatut = new TableColumn<>("Statut");
         colStatut.setCellValueFactory(cellData -> {
             Chambre.Statut stat = cellData.getValue().getStatut();
             return new javafx.beans.property.SimpleStringProperty(stat != null ? stat.name() : "");
         });
         TableViewHelper.configureFlexibleColumn(colStatut, 100, 140);
-        
+
         TableColumn<Chambre, Double> colPrix = new TableColumn<>("Prix/Nuit");
         colPrix.setCellValueFactory(new PropertyValueFactory<>("prixNuit"));
         TableViewHelper.configureFlexibleColumn(colPrix, 90, 110);
@@ -125,17 +127,17 @@ public class ChambreView extends VBox {
                 }
             }
         });
-        
+
         TableColumn<Chambre, String> colDescription = new TableColumn<>("Description");
         colDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
         TableViewHelper.configureFlexibleColumn(colDescription, 200, 300);
-        
+
         tableView.getColumns().addAll(colNumero, colCategorie, colStatut, colPrix, colDescription);
-        
+
         // Configurer le tableau pour qu'il s'adapte à la taille disponible
         TableViewHelper.configureAutoResizeTableView(tableView);
         tableView.setMinHeight(220);
-        
+
         // Boutons
         btnAjouter = new Button("➕ Ajouter");
         btnModifier = new Button("✏️ Modifier");
@@ -143,12 +145,12 @@ public class ChambreView extends VBox {
         btnRechercher = new Button("🔍 Rechercher");
         btnReinitialiser = new Button("🔄 Réinitialiser");
         btnDisponibles = new Button("✅ Disponibles");
-        
+
         // Label de statut
         lblStatus = new Label();
         lblStatus.setWrapText(true);
     }
-    
+
     /**
      * Adapte l'interface selon le rôle de l'utilisateur.
      * Les réceptionnistes ne peuvent que consulter et changer le statut.
@@ -157,24 +159,28 @@ public class ChambreView extends VBox {
         if (AuthenticationService.getUtilisateurConnecte() == null) {
             return;
         }
-        
-        boolean isReceptionniste = AuthenticationService.getUtilisateurConnecte().getRole() == RoleUtilisateur.RECEPTIONNISTE;
-        
+
+        boolean isReceptionniste = AuthenticationService.getUtilisateurConnecte()
+                .getRole() == RoleUtilisateur.RECEPTIONNISTE;
+
         if (isReceptionniste) {
-            // Désactiver les boutons d'ajout, modification et suppression
+            // Désactiver les boutons d'ajout et suppression
             btnAjouter.setDisable(true);
             btnAjouter.setVisible(false);
-            btnModifier.setDisable(true);
-            btnModifier.setVisible(false);
             btnSupprimer.setDisable(true);
             btnSupprimer.setVisible(false);
-            
+
+            // Le bouton modifier reste actif pour le changement de statut
+            btnModifier.setDisable(false);
+            btnModifier.setVisible(true);
+            btnModifier.setText("💾 Changer Statut");
+
             // Désactiver les champs du formulaire sauf le statut
             txtNumero.setDisable(true);
             cmbCategorie.setDisable(true);
             txtPrix.setDisable(true);
             txtDescription.setDisable(true);
-            
+
             // Le statut reste modifiable
             cmbStatut.setDisable(false);
         }
@@ -183,39 +189,38 @@ public class ChambreView extends VBox {
     private void setupLayout() {
         setSpacing(10);
         setPadding(new Insets(10));
-        
+
         // Conteneur principal avec scroll
         VBox contentContainer = new VBox(10);
         contentContainer.setPadding(new Insets(5));
-        
+
         // Titre
         Label title = new Label("Gestion des Chambres");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         title.setTextFill(Color.web("#2c3e50"));
-        
+
         // Zone de recherche
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(Pos.CENTER_LEFT);
         searchBox.getChildren().addAll(
-            new Label("Recherche:"),
-            txtSearch,
-            btnRechercher,
-            btnReinitialiser,
-            btnDisponibles
-        );
+                new Label("Recherche:"),
+                txtSearch,
+                btnRechercher,
+                btnReinitialiser,
+                btnDisponibles);
         HBox.setHgrow(txtSearch, Priority.ALWAYS);
-        
+
         // Formulaire dans un Accordion (pliable)
         Accordion accordion = new Accordion();
         TitledPane formPane = new TitledPane("📝 Formulaire d'ajout/modification", null);
         formPane.setExpanded(false); // Fermé par défaut pour économiser l'espace
-        
+
         GridPane form = new GridPane();
         form.setHgap(15);
         form.setVgap(10);
         form.setPadding(new Insets(15));
         form.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 5;");
-        
+
         form.add(new Label("Numéro *:"), 0, 0);
         form.add(txtNumero, 1, 0);
         form.add(new Label("Catégorie *:"), 0, 1);
@@ -226,30 +231,30 @@ public class ChambreView extends VBox {
         form.add(txtPrix, 1, 3);
         form.add(new Label("Description:"), 0, 4);
         form.add(txtDescription, 1, 4);
-        
+
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPrefWidth(120);
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setHgrow(Priority.ALWAYS);
         form.getColumnConstraints().addAll(col1, col2);
-        
+
         // Boutons d'action
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
         buttonBox.getChildren().addAll(btnAjouter, btnModifier, btnSupprimer);
-        
+
         VBox formContainer = new VBox(10);
         formContainer.getChildren().addAll(form, buttonBox);
         formPane.setContent(formContainer);
         accordion.getPanes().add(formPane);
-        
+
         // TableView - prend tout l'espace disponible
         tableView.setPrefHeight(Region.USE_COMPUTED_SIZE);
         VBox.setVgrow(tableView, Priority.ALWAYS);
-        
+
         contentContainer.getChildren().addAll(title, searchBox, accordion, tableView, lblStatus);
-        
+
         // ScrollPane pour tout le contenu
         ScrollPane mainScrollPane = new ScrollPane(contentContainer);
         mainScrollPane.setFitToWidth(true);
@@ -257,40 +262,38 @@ public class ChambreView extends VBox {
         mainScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         mainScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         mainScrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-        
+
         getChildren().add(mainScrollPane);
         VBox.setVgrow(mainScrollPane, Priority.ALWAYS);
     }
 
     private void setupStyles() {
-        String buttonStyle = 
-            "-fx-background-color: #3498db; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 8 15; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;";
-        
+        String buttonStyle = "-fx-background-color: #3498db; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 8 15; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;";
+
         btnAjouter.setStyle(buttonStyle);
         btnModifier.setStyle(buttonStyle);
         btnRechercher.setStyle(buttonStyle);
         btnReinitialiser.setStyle(buttonStyle);
         btnDisponibles.setStyle(buttonStyle);
-        
+
         btnSupprimer.setStyle(
-            "-fx-background-color: #e74c3c; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 8 15; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;"
-        );
-        
+                "-fx-background-color: #e74c3c; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-padding: 8 15; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-cursor: hand;");
+
         String fieldStyle = "-fx-font-size: 14px; -fx-padding: 5;";
         txtNumero.setStyle(fieldStyle);
         txtPrix.setStyle(fieldStyle);
         txtSearch.setStyle(fieldStyle);
-        
+
         tableView.setStyle("-fx-font-size: 13px;");
     }
 
@@ -300,7 +303,7 @@ public class ChambreView extends VBox {
                 fillForm(newVal);
             }
         });
-        
+
         btnAjouter.setOnAction(e -> addChambre());
         btnModifier.setOnAction(e -> updateChambre());
         btnSupprimer.setOnAction(e -> deleteChambre());
@@ -338,7 +341,7 @@ public class ChambreView extends VBox {
             chambre.setStatut(cmbStatut.getValue());
             chambre.setPrixNuit(Double.parseDouble(txtPrix.getText()));
             chambre.setDescription(txtDescription.getText());
-            
+
             Chambre created = controller.createChambre(chambre);
             showSuccess("Chambre ajoutée avec succès (Numéro: " + created.getNumeroChambre() + ")");
             clearForm();
@@ -355,11 +358,11 @@ public class ChambreView extends VBox {
             showError("Veuillez sélectionner une chambre à modifier");
             return;
         }
-        
+
         try {
             boolean isReceptionniste = AuthenticationService.getUtilisateurConnecte() != null &&
-                                       AuthenticationService.getUtilisateurConnecte().getRole() == RoleUtilisateur.RECEPTIONNISTE;
-            
+                    AuthenticationService.getUtilisateurConnecte().getRole() == RoleUtilisateur.RECEPTIONNISTE;
+
             if (isReceptionniste) {
                 // Les réceptionnistes ne peuvent modifier que le statut
                 selected.setStatut(cmbStatut.getValue());
@@ -372,7 +375,7 @@ public class ChambreView extends VBox {
                 selected.setStatut(cmbStatut.getValue());
                 selected.setPrixNuit(Double.parseDouble(txtPrix.getText()));
                 selected.setDescription(txtDescription.getText());
-                
+
                 controller.updateChambre(selected);
                 showSuccess("Chambre modifiée avec succès");
             }
@@ -390,12 +393,12 @@ public class ChambreView extends VBox {
             showError("Veuillez sélectionner une chambre à supprimer");
             return;
         }
-        
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmation");
         confirm.setHeaderText("Supprimer la chambre");
         confirm.setContentText("Êtes-vous sûr de vouloir supprimer la chambre " + selected.getNumeroChambre() + " ?");
-        
+
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             try {
                 controller.deleteChambre(selected.getNumeroChambre());
@@ -415,7 +418,7 @@ public class ChambreView extends VBox {
             loadChambres();
             return;
         }
-        
+
         try {
             int numero = Integer.parseInt(searchTerm);
             Chambre chambre = controller.getChambreByNumero(numero);
@@ -441,7 +444,7 @@ public class ChambreView extends VBox {
     public void refreshData() {
         loadChambres();
     }
-    
+
     private void loadChambres() {
         try {
             List<Chambre> chambres = controller.getAllChambres();

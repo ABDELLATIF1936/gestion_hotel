@@ -1,0 +1,33 @@
+@startuml
+scale 600 width
+[*] --> EN_ATTENTE : Création
+
+state EN_ATTENTE {
+  [*] --> VerificationDispo
+  VerificationDispo --> AttenteConfirmation : Dispo OK
+}
+
+EN_ATTENTE --> CONFIRMEE : Acompte versé / Validé
+EN_ATTENTE --> ANNULEE : Annulation client / Délai expiré
+
+state CONFIRMEE {
+}
+
+CONFIRMEE --> EN_COURS : Check-in (Arrivée Client)
+CONFIRMEE --> ANNULEE : Annulation tardive
+
+state EN_COURS {
+  [*] --> Sejour
+  Sejour --> AjoutServices : Conso extra
+}
+
+EN_COURS --> TERMINEE : Check-out (Départ Client)
+
+state TERMINEE {
+  [*] --> GenerationFacture
+  GenerationFacture --> Paiement : Facture émise
+  Paiement --> [*] : Soldé
+}
+
+ANNULEE --> [*]
+@enduml

@@ -6,6 +6,7 @@ import com.hotel.model.RoleUtilisateur;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -20,7 +21,7 @@ public class MainView extends BorderPane {
     private StackPane contentArea;
     private HBox header;
     private Label currentModuleLabel;
-    
+
     // Boutons de navigation
     private Button btnDashboard;
     private Button btnClients;
@@ -33,10 +34,10 @@ public class MainView extends BorderPane {
     private Button btnEmployes;
     private Button btnParametres;
     private Button btnDeconnexion;
-    
+
     // Utilisateur connecté
     private Utilisateur utilisateurConnecte;
-    
+
     // Vues
     private DashboardView dashboardView;
     private DashboardEntretienView dashboardEntretienView;
@@ -53,13 +54,13 @@ public class MainView extends BorderPane {
     public MainView() {
         // Récupérer l'utilisateur connecté
         utilisateurConnecte = AuthenticationService.getUtilisateurConnecte();
-        
+
         initializeComponents();
         setupLayout();
         setupStyles();
         setupEventHandlers();
         adaptInterfaceToRole();
-        
+
         // Afficher le dashboard par défaut
         showDashboard();
     }
@@ -74,7 +75,7 @@ public class MainView extends BorderPane {
         facturationView = new FacturationView();
         serviceView = new ServiceView();
         entretienView = new EntretienView();
-        
+
         // Initialisation des boutons
         btnDashboard = new Button("📊 Tableau de bord");
         btnClients = new Button("👥 Clients");
@@ -87,7 +88,7 @@ public class MainView extends BorderPane {
         btnEmployes = new Button("👥 Employés");
         btnParametres = new Button("⚙️ Paramètres");
         btnDeconnexion = new Button("🚪 Déconnexion");
-        
+
         // Afficher le nom de l'utilisateur
         String username = utilisateurConnecte != null ? utilisateurConnecte.getUsername() : "Utilisateur";
         String role = utilisateurConnecte != null ? utilisateurConnecte.getRole().getLibelle() : "";
@@ -102,42 +103,53 @@ public class MainView extends BorderPane {
         sidebar.setSpacing(10);
         sidebar.setPrefWidth(250);
         sidebar.setMinWidth(200);
-        
+
         Label title = new Label("HOTEL MANAGER");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         title.setTextFill(Color.WHITE);
-        
+
         sidebar.getChildren().addAll(
-            title,
-            new Separator(),
-            btnDashboard,
-            btnClients,
-            btnChambres,
-            btnReservations,
-            btnFacturation,
-            btnServices,
-            btnEntretien,
-            new Separator(),
-            btnUtilisateurs,
-            btnEmployes,
-            btnParametres,
-            new Separator(),
-            btnDeconnexion
-        );
-        
+                title,
+                new Separator(),
+                btnDashboard,
+                btnClients,
+                btnChambres,
+                btnReservations,
+                btnFacturation,
+                btnServices,
+                btnEntretien,
+                new Separator(),
+                btnUtilisateurs,
+                btnEmployes,
+                btnParametres,
+                new Separator(),
+                btnDeconnexion);
+
+        // Wrap sidebar in ScrollPane
+        ScrollPane sidebarScrollPane = new ScrollPane(sidebar);
+        sidebarScrollPane.setFitToWidth(true);
+        sidebarScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        sidebarScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        sidebarScrollPane.getStyleClass().add("sidebar-scroll-pane");
+        sidebarScrollPane.setMinWidth(220);
+        sidebarScrollPane.setPrefWidth(260);
+
+        // Ensure sidebar takes full height
+        sidebar.setMinHeight(Region.USE_PREF_SIZE);
+
         // Zone de contenu
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(20));
-        
+
         // Header
         header = new HBox();
         header.setPadding(new Insets(15, 20, 15, 20));
         header.setSpacing(10);
         header.getChildren().add(currentModuleLabel);
         HBox.setHgrow(currentModuleLabel, Priority.ALWAYS);
-        
+
         // Layout principal
-        setLeft(sidebar);
+        setLeft(sidebarScrollPane);
         setCenter(contentArea);
         setTop(header);
     }
@@ -145,25 +157,22 @@ public class MainView extends BorderPane {
     private void setupStyles() {
         // Styles de la sidebar
         sidebar.setStyle(
-            "-fx-background-color: #2c3e50; " +
-            "-fx-border-color: #34495e; " +
-            "-fx-border-width: 0 1 0 0;"
-        );
-        
+                "-fx-background-color: #2c3e50; " +
+                        "-fx-border-color: #34495e; " +
+                        "-fx-border-width: 0 1 0 0;");
+
         // Styles des boutons
-        String buttonStyle = 
-            "-fx-background-color: #34495e; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 12 20; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand; " +
-            "-fx-alignment: center-left;";
-        
-        String buttonHoverStyle = 
-            "-fx-background-color: #3498db; " +
-            "-fx-text-fill: white;";
-        
+        String buttonStyle = "-fx-background-color: #34495e; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 12 20; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand; " +
+                "-fx-alignment: center-left;";
+
+        String buttonHoverStyle = "-fx-background-color: #3498db; " +
+                "-fx-text-fill: white;";
+
         btnDashboard.setStyle(buttonStyle);
         btnClients.setStyle(buttonStyle);
         btnChambres.setStyle(buttonStyle);
@@ -174,18 +183,17 @@ public class MainView extends BorderPane {
         btnUtilisateurs.setStyle(buttonStyle);
         btnEmployes.setStyle(buttonStyle);
         btnParametres.setStyle(buttonStyle);
-        
+
         // Style spécial pour le bouton de déconnexion
-        String logoutStyle = 
-            "-fx-background-color: #e74c3c; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 12 20; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand; " +
-            "-fx-alignment: center-left;";
+        String logoutStyle = "-fx-background-color: #e74c3c; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 12 20; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand; " +
+                "-fx-alignment: center-left;";
         btnDeconnexion.setStyle(logoutStyle);
-        
+
         // Effet hover
         setupButtonHover(btnDashboard, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnClients, buttonStyle, buttonHoverStyle);
@@ -198,10 +206,10 @@ public class MainView extends BorderPane {
         setupButtonHover(btnEmployes, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnParametres, buttonStyle, buttonHoverStyle);
         setupButtonHover(btnDeconnexion, logoutStyle, "-fx-background-color: #c0392b; -fx-text-fill: white;");
-        
+
         // Header
         header.setStyle("-fx-background-color: #ecf0f1; -fx-border-color: #bdc3c7; -fx-border-width: 0 0 1 0;");
-        
+
         // Zone de contenu
         contentArea.setStyle("-fx-background-color: #ffffff;");
     }
@@ -224,7 +232,7 @@ public class MainView extends BorderPane {
         btnParametres.setOnAction(e -> showParametres());
         btnDeconnexion.setOnAction(e -> handleDeconnexion());
     }
-    
+
     /**
      * Adapte l'interface selon le rôle de l'utilisateur.
      */
@@ -232,88 +240,83 @@ public class MainView extends BorderPane {
         if (utilisateurConnecte == null) {
             return;
         }
-        
+
         // Masquer/désactiver les boutons selon les permissions
         btnClients.setVisible(AuthenticationService.hasPermission("gestion.clients"));
         btnClients.setManaged(AuthenticationService.hasPermission("gestion.clients"));
-        
+
         btnChambres.setVisible(AuthenticationService.hasPermission("gestion.chambres"));
         btnChambres.setManaged(AuthenticationService.hasPermission("gestion.chambres"));
-        
+
         btnReservations.setVisible(AuthenticationService.hasPermission("gestion.reservations"));
         btnReservations.setManaged(AuthenticationService.hasPermission("gestion.reservations"));
-        
+
         btnFacturation.setVisible(AuthenticationService.hasPermission("gestion.factures"));
         btnFacturation.setManaged(AuthenticationService.hasPermission("gestion.factures"));
-        
+
         btnServices.setVisible(AuthenticationService.hasPermission("gestion.services"));
         btnServices.setManaged(AuthenticationService.hasPermission("gestion.services"));
-        
+
         btnEntretien.setVisible(AuthenticationService.hasPermission("gestion.entretien"));
         btnEntretien.setManaged(AuthenticationService.hasPermission("gestion.entretien"));
-        
+
         // Boutons visibles uniquement pour les admins
         boolean isAdmin = utilisateurConnecte.getRole() == RoleUtilisateur.ADMIN;
         btnUtilisateurs.setVisible(isAdmin);
         btnUtilisateurs.setManaged(isAdmin);
         btnEmployes.setVisible(isAdmin);
         btnEmployes.setManaged(isAdmin);
-        
+
         // Bouton Paramètres visible pour tous
         btnParametres.setVisible(true);
         btnParametres.setManaged(true);
-        
-        // Bouton Entretien visible pour les réceptionnistes (plus seulement pour ENTRETIEN)
+
+        // Bouton Entretien visible pour les réceptionnistes (plus seulement pour
+        // ENTRETIEN)
         boolean isReceptionniste = utilisateurConnecte.getRole() == RoleUtilisateur.RECEPTIONNISTE;
         btnEntretien.setVisible(isReceptionniste || isAdmin);
         btnEntretien.setManaged(isReceptionniste || isAdmin);
     }
-    
+
     /**
      * Gère la déconnexion de l'utilisateur.
      */
     private void handleDeconnexion() {
         AuthenticationService.deconnecter();
-        
+
         // Retourner à l'écran de connexion
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-            javafx.scene.control.Alert.AlertType.INFORMATION);
+                javafx.scene.control.Alert.AlertType.INFORMATION);
         alert.setTitle("Déconnexion");
         alert.setHeaderText("Déconnexion réussie");
         alert.setContentText("Vous avez été déconnecté avec succès.");
         alert.showAndWait();
-        
+
         // Recharger la vue de connexion
         com.hotel.view.LoginView loginView = new com.hotel.view.LoginView();
         loginView.setPrimaryStage((javafx.stage.Stage) getScene().getWindow());
-        
+
         javafx.scene.Scene scene = new javafx.scene.Scene(loginView, 600, 500);
         try {
             scene.getStylesheets().add(getClass().getResource("/css/style.css").toExternalForm());
         } catch (Exception e) {
             // Ignorer si le CSS n'existe pas
         }
-        
+
         ((javafx.stage.Stage) getScene().getWindow()).setScene(scene);
     }
 
     private void showDashboard() {
         currentModuleLabel.setText("📊 Tableau de bord");
         contentArea.getChildren().clear();
-        
-        // Afficher le tableau de bord approprié selon le rôle
-        if (utilisateurConnecte != null && utilisateurConnecte.getRole() == RoleUtilisateur.ENTRETIEN) {
-            // Tableau de bord spécifique pour le personnel d'entretien
-            dashboardEntretienView.refreshStatistics();
-            contentArea.getChildren().add(dashboardEntretienView);
-        } else {
-            // Tableau de bord standard pour admin et réceptionniste
-            dashboardView.refreshStatistics();
-            contentArea.getChildren().add(dashboardView);
-        }
-        
+
+        // Afficher le tableau de bord standard pour admin et réceptionniste
+        dashboardView.refreshStatistics();
+        contentArea.getChildren().add(dashboardView);
+
         resetButtonStyles();
-        btnDashboard.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnDashboard.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showClients() {
@@ -327,7 +330,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(clientView);
         resetButtonStyles();
-        btnClients.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnClients.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showChambres() {
@@ -341,7 +345,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(chambreView);
         resetButtonStyles();
-        btnChambres.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnChambres.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showReservations() {
@@ -355,7 +360,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(reservationView);
         resetButtonStyles();
-        btnReservations.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnReservations.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showFacturation() {
@@ -369,7 +375,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(facturationView);
         resetButtonStyles();
-        btnFacturation.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnFacturation.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showServices() {
@@ -383,7 +390,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(serviceView);
         resetButtonStyles();
-        btnServices.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnServices.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showEntretien() {
@@ -397,7 +405,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(entretienView);
         resetButtonStyles();
-        btnEntretien.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnEntretien.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showUtilisateurs() {
@@ -411,7 +420,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(gestionUtilisateursView);
         resetButtonStyles();
-        btnUtilisateurs.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnUtilisateurs.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showEmployes() {
@@ -425,7 +435,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(gestionEmployesView);
         resetButtonStyles();
-        btnEmployes.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnEmployes.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void showParametres() {
@@ -439,7 +450,8 @@ public class MainView extends BorderPane {
         }
         contentArea.getChildren().add(parametresView);
         resetButtonStyles();
-        btnParametres.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnParametres.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 5; -fx-cursor: hand;");
     }
 
     private void resetButtonStyles() {

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `utilisateur` (
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
     `idEmploye` INT(11) NOT NULL,
-    `role` ENUM('ADMIN', 'RECEPTIONNISTE', 'ENTRETIEN') NOT NULL,
+    `role` ENUM('ADMIN', 'RECEPTIONNISTE') NOT NULL,
     `actif` BOOLEAN NOT NULL DEFAULT TRUE,
     `dateCreation` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `dernierLogin` TIMESTAMP NULL,
@@ -70,16 +70,7 @@ ON DUPLICATE KEY UPDATE
     password = '1b0d33348e535a7cf9b39bd45bd8b7f577a45f7289a554d7d92188e72add5c90',
     actif = TRUE;
 
--- Personnel d'entretien
-INSERT INTO `utilisateur` (`username`, `password`, `idEmploye`, `role`, `actif`) 
-SELECT 'entretien', '65f91dd7ba66286628bd64243a2550db5360fbf9ff0604585dda944bd65ea963', 
-       idEmploye, 'ENTRETIEN', TRUE
-FROM `employer` 
-WHERE role = 'ENTRETIEN' 
-LIMIT 1
-ON DUPLICATE KEY UPDATE 
-    password = '65f91dd7ba66286628bd64243a2550db5360fbf9ff0604585dda944bd65ea963',
-    actif = TRUE;
+
 
 SELECT 'Configuration de l''authentification terminée avec succès!' AS message;
 

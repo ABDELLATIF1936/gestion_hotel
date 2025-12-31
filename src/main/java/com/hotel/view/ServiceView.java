@@ -23,20 +23,20 @@ import java.util.List;
  */
 public class ServiceView extends VBox {
     private static final Logger logger = Logger.getLogger(ServiceView.class);
-    
+
     private ServiceController controller;
-    
+
     // Composants du formulaire
     private TextField txtNom;
     private TextField txtPrix;
     private TextArea txtDescription;
     private CheckBox chkActif;
     private TextField txtSearch;
-    
+
     // TableView
     private TableView<ServiceSupplementaire> tableView;
     private ObservableList<ServiceSupplementaire> serviceList;
-    
+
     // Boutons
     private Button btnAjouter;
     private Button btnModifier;
@@ -44,10 +44,10 @@ public class ServiceView extends VBox {
     private Button btnRechercher;
     private Button btnReinitialiser;
     private Button btnActifs;
-    
+
     // Labels de statut
     private Label lblStatus;
-    
+
     public ServiceView() {
         try {
             controller = new ServiceController();
@@ -55,6 +55,7 @@ public class ServiceView extends VBox {
             setupLayout();
             setupStyles();
             setupEventHandlers();
+            adaptInterfaceToRole(); // Add this line
             loadServices();
         } catch (Exception e) {
             logger.error("Erreur lors de l'initialisation de ServiceView", e);
@@ -65,34 +66,34 @@ public class ServiceView extends VBox {
     private void initializeComponents() {
         txtNom = new TextField();
         txtNom.setPromptText("Nom du service");
-        
+
         txtPrix = new TextField();
         txtPrix.setPromptText("Prix");
-        
+
         txtDescription = new TextArea();
         txtDescription.setPromptText("Description");
         txtDescription.setPrefRowCount(3);
-        
+
         chkActif = new CheckBox("Service actif");
         chkActif.setSelected(true);
-        
+
         txtSearch = new TextField();
         txtSearch.setPromptText("Rechercher par nom...");
-        
+
         // TableView
         tableView = new TableView<>();
         serviceList = FXCollections.observableArrayList();
         tableView.setItems(serviceList);
-        
+
         // Colonnes avec configuration flexible
         TableColumn<ServiceSupplementaire, Integer> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(new PropertyValueFactory<>("idService"));
         TableViewHelper.configureFixedColumn(colId, 60);
-        
+
         TableColumn<ServiceSupplementaire, String> colNom = new TableColumn<>("Nom");
         colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
         TableViewHelper.configureFlexibleColumn(colNom, 150, 200);
-        
+
         TableColumn<ServiceSupplementaire, Double> colPrix = new TableColumn<>("Prix");
         colPrix.setCellValueFactory(new PropertyValueFactory<>("prix"));
         TableViewHelper.configureFlexibleColumn(colPrix, 90, 110);
@@ -107,21 +108,21 @@ public class ServiceView extends VBox {
                 }
             }
         });
-        
+
         TableColumn<ServiceSupplementaire, String> colDescription = new TableColumn<>("Description");
         colDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
         TableViewHelper.configureFlexibleColumn(colDescription, 200, 300);
-        
+
         TableColumn<ServiceSupplementaire, Boolean> colActif = new TableColumn<>("Actif");
         colActif.setCellValueFactory(new PropertyValueFactory<>("actif"));
         TableViewHelper.configureFixedColumn(colActif, 70);
-        
+
         tableView.getColumns().addAll(colId, colNom, colPrix, colDescription, colActif);
-        
+
         // Configurer le tableau pour qu'il s'adapte à la taille disponible
         TableViewHelper.configureAutoResizeTableView(tableView);
         tableView.setMinHeight(220);
-        
+
         // Boutons
         btnAjouter = new Button("➕ Ajouter");
         btnModifier = new Button("✏️ Modifier");
@@ -129,47 +130,70 @@ public class ServiceView extends VBox {
         btnRechercher = new Button("🔍 Rechercher");
         btnReinitialiser = new Button("🔄 Réinitialiser");
         btnActifs = new Button("✅ Actifs");
-        
+
         lblStatus = new Label();
         lblStatus.setWrapText(true);
+    }
+
+    private void adaptInterfaceToRole() {
+        if (com.hotel.security.AuthenticationService.getUtilisateurConnecte() == null) {
+            return;
+        }
+
+        boolean isAdmin = com.hotel.security.AuthenticationService.getUtilisateurConnecte()
+                .getRole() == com.hotel.model.RoleUtilisateur.ADMIN;
+
+        if (!isAdmin) {
+            // Hide admin-only controls for non-admins (e.g. Receptionists)
+            btnAjouter.setVisible(false);
+            btnAjouter.setManaged(false);
+            btnModifier.setVisible(false);
+            btnModifier.setManaged(false);
+            btnSupprimer.setVisible(false);
+            btnSupprimer.setManaged(false);
+
+            txtNom.setDisable(true);
+            txtPrix.setDisable(true);
+            txtDescription.setDisable(true);
+            chkActif.setDisable(true);
+        }
     }
 
     private void setupLayout() {
         setSpacing(10);
         setPadding(new Insets(10));
-        
+
         // Conteneur principal avec scroll
         VBox contentContainer = new VBox(10);
         contentContainer.setPadding(new Insets(5));
-        
+
         // Titre
         Label title = new Label("Gestion des Services Supplémentaires");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         title.setTextFill(Color.web("#2c3e50"));
-        
+
         // Zone de recherche
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(Pos.CENTER_LEFT);
         searchBox.getChildren().addAll(
-            new Label("Recherche:"),
-            txtSearch,
-            btnRechercher,
-            btnReinitialiser,
-            btnActifs
-        );
+                new Label("Recherche:"),
+                txtSearch,
+                btnRechercher,
+                btnReinitialiser,
+                btnActifs);
         HBox.setHgrow(txtSearch, Priority.ALWAYS);
-        
+
         // Formulaire dans un Accordion (pliable)
         Accordion accordion = new Accordion();
         TitledPane formPane = new TitledPane("📝 Formulaire d'ajout/modification", null);
         formPane.setExpanded(false); // Fermé par défaut pour économiser l'espace
-        
+
         GridPane form = new GridPane();
         form.setHgap(15);
         form.setVgap(10);
         form.setPadding(new Insets(15));
         form.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 5;");
-        
+
         form.add(new Label("Nom *:"), 0, 0);
         form.add(txtNom, 1, 0);
         form.add(new Label("Prix *:"), 0, 1);
@@ -178,28 +202,28 @@ public class ServiceView extends VBox {
         form.add(txtDescription, 1, 2);
         form.add(new Label("Statut:"), 0, 3);
         form.add(chkActif, 1, 3);
-        
+
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPrefWidth(120);
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setHgrow(Priority.ALWAYS);
         form.getColumnConstraints().addAll(col1, col2);
-        
+
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.getChildren().addAll(btnAjouter, btnModifier, btnSupprimer);
-        
+
         VBox formContainer = new VBox(10);
         formContainer.getChildren().addAll(form, buttonBox);
         formPane.setContent(formContainer);
         accordion.getPanes().add(formPane);
-        
+
         // TableView - prend tout l'espace disponible
         tableView.setPrefHeight(Region.USE_COMPUTED_SIZE);
         VBox.setVgrow(tableView, Priority.ALWAYS);
-        
+
         contentContainer.getChildren().addAll(title, searchBox, accordion, tableView, lblStatus);
-        
+
         // ScrollPane pour tout le contenu
         ScrollPane mainScrollPane = new ScrollPane(contentContainer);
         mainScrollPane.setFitToWidth(true);
@@ -209,34 +233,32 @@ public class ServiceView extends VBox {
     }
 
     private void setupStyles() {
-        String buttonStyle = 
-            "-fx-background-color: #3498db; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 8 15; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;";
-        
+        String buttonStyle = "-fx-background-color: #3498db; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 8 15; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;";
+
         btnAjouter.setStyle(buttonStyle);
         btnModifier.setStyle(buttonStyle);
         btnRechercher.setStyle(buttonStyle);
         btnReinitialiser.setStyle(buttonStyle);
         btnActifs.setStyle(buttonStyle);
-        
+
         btnSupprimer.setStyle(
-            "-fx-background-color: #e74c3c; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 8 15; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;"
-        );
-        
+                "-fx-background-color: #e74c3c; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-padding: 8 15; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-cursor: hand;");
+
         String fieldStyle = "-fx-font-size: 14px; -fx-padding: 5;";
         txtNom.setStyle(fieldStyle);
         txtPrix.setStyle(fieldStyle);
         txtSearch.setStyle(fieldStyle);
-        
+
         tableView.setStyle("-fx-font-size: 13px;");
     }
 
@@ -246,7 +268,7 @@ public class ServiceView extends VBox {
                 fillForm(newVal);
             }
         });
-        
+
         btnAjouter.setOnAction(e -> addService());
         btnModifier.setOnAction(e -> updateService());
         btnSupprimer.setOnAction(e -> deleteService());
@@ -281,7 +303,7 @@ public class ServiceView extends VBox {
             service.setPrix(Double.parseDouble(txtPrix.getText()));
             service.setDescription(txtDescription.getText());
             service.setActif(chkActif.isSelected());
-            
+
             ServiceSupplementaire created = controller.createService(service);
             showSuccess("Service ajouté avec succès (ID: " + created.getIdService() + ")");
             clearForm();
@@ -298,13 +320,13 @@ public class ServiceView extends VBox {
             showError("Veuillez sélectionner un service à modifier");
             return;
         }
-        
+
         try {
             selected.setNom(txtNom.getText());
             selected.setPrix(Double.parseDouble(txtPrix.getText()));
             selected.setDescription(txtDescription.getText());
             selected.setActif(chkActif.isSelected());
-            
+
             controller.updateService(selected);
             showSuccess("Service modifié avec succès");
             clearForm();
@@ -321,12 +343,12 @@ public class ServiceView extends VBox {
             showError("Veuillez sélectionner un service à supprimer");
             return;
         }
-        
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmation");
         confirm.setHeaderText("Supprimer le service");
         confirm.setContentText("Êtes-vous sûr de vouloir supprimer " + selected.getNom() + " ?");
-        
+
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             try {
                 controller.deleteService(selected.getIdService());
@@ -346,7 +368,7 @@ public class ServiceView extends VBox {
             loadServices();
             return;
         }
-        
+
         try {
             List<ServiceSupplementaire> services = controller.getAllServices();
             serviceList.clear();
@@ -369,7 +391,7 @@ public class ServiceView extends VBox {
     public void refreshData() {
         loadServices();
     }
-    
+
     private void loadServices() {
         try {
             List<ServiceSupplementaire> services = controller.getAllServices();

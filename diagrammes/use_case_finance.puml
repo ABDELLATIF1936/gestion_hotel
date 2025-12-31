@@ -1,0 +1,36 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Réceptionniste" as Rec
+actor "Administrateur" as Admin
+
+' Inheritance
+Admin --|> Rec
+
+package "Facturation & Paiement" {
+    usecase "Créer une Facture" as CreateInv
+    usecase "Modifier une Facture" as EditInv
+    usecase "Encaisser / Marquer Payée" as PayInv
+    usecase "Télécharger Facture PDF" as DownloadPDF
+    usecase "Calculer Montant Total" as CalcTotal
+}
+
+package "Services Supplémentaires" {
+    usecase "Gérer Catalogue Services" as ManageServices
+    usecase "Ajouter Service à Réservation" as AddServiceToRes
+}
+
+' Links
+Rec --> CreateInv
+Rec --> EditInv
+Rec --> PayInv
+Rec --> DownloadPDF
+Rec --> CalcTotal
+Rec --> AddServiceToRes
+
+' Admin exclusive
+Admin --> ManageServices
+
+@enduml

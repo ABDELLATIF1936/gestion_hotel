@@ -1,0 +1,83 @@
+@startuml
+hide methods
+hide circle
+skinparam classAttributeIconSize 0
+
+package "Modèle de Domaine" {
+    class Hotel {
+        nom
+        adresse
+    }
+
+    class Utilisateur {
+        username
+        password
+        role
+        actif
+    }
+
+    class Employe {
+        nom
+        prenom
+        role
+        telephone
+        email
+    }
+
+    class Client {
+        nom
+        prenom
+        telephone
+        email
+        type
+    }
+
+    class Chambre {
+        numero
+        categorie
+        statut
+        prixNuit
+        description
+    }
+
+    class Reservation {
+        dateDebut
+        dateFin
+        checkIn
+        checkOut
+        statut
+        nbPersonnes
+        notes
+    }
+
+    class ServiceSupplementaire {
+        nom
+        prix
+        description
+        actif
+    }
+
+    class TacheEntretien {
+        type
+        date
+        statut
+        description
+    }
+
+    class Facture {
+        dateEmission
+        montantTotal
+        statut
+    }
+}
+
+' Relations
+Utilisateur "1" -- "1" Employe : est lié à >
+Employe "1" -- "*" TacheEntretien : effectue >
+Client "1" -- "*" Reservation : effectue >
+Reservation "*" -- "1" Chambre : concerne >
+Reservation "*" -- "*" ServiceSupplementaire : inclut >
+Reservation "1" -- "0..1" Facture : génère >
+Chambre "1" -- "*" TacheEntretien : nécessite >
+
+@enduml

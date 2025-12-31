@@ -1,0 +1,110 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Réceptionniste" as Rec
+actor "Administrateur" as Admin
+
+' Inheritance: Admin can do everything a Receptionist can do
+Admin --|> Rec
+
+package "Authentification & Navigation" {
+    usecase "Se connecter" as Login
+    usecase "Se déconnecter" as Logout
+    usecase "Voir le Tableau de Bord" as Dashboard
+    usecase "Gérer son Profil / Changer MDP" as Settings
+}
+
+package "Gestion des Clients" {
+    usecase "Créer un Client" as CreateClient
+    usecase "Modifier un Client" as EditClient
+    usecase "Supprimer un Client" as DeleteClient
+    usecase "Rechercher un Client" as SearchClient
+}
+
+package "Gestion des Chambres" {
+    usecase "Consulter la liste des Chambres" as ViewRooms
+    usecase "Changer le Statut (Nettoyage/Dispo)" as ChangeRoomStatus
+    usecase "Créer une Chambre" as CreateRoom
+    usecase "Modifier une Chambre" as EditRoom
+    usecase "Supprimer une Chambre" as DeleteRoom
+}
+
+package "Gestion des Réservations" {
+    usecase "Créer une Réservation" as CreateRes
+    usecase "Modifier une Réservation" as EditRes
+    usecase "Annuler une Réservation" as CancelRes
+    usecase "Effectuer Check-in" as CheckIn
+    usecase "Effectuer Check-out" as CheckOut
+    usecase "Voir Calendrier / Disponibilités" as ViewCal
+}
+
+package "Facturation & Paiement" {
+    usecase "Créer une Facture" as CreateInv
+    usecase "Modifier une Facture" as EditInv
+    usecase "Encaisser / Marquer Payée" as PayInv
+    usecase "Télécharger Facture PDF" as DownloadPDF
+    usecase "Calculer Montant Total" as CalcTotal
+}
+
+package "Services Supplémentaires" {
+    usecase "Gérer Catalogue Services" as ManageServices
+    usecase "Ajouter Service à Réservation" as AddServiceToRes
+}
+
+package "Maintenance & Entretien" {
+    usecase "Signaler un Problème" as ReportIssue
+    usecase "Mettre à jour Statut Ticket" as UpdateTicket
+    usecase "Voir Dashboard Entretien" as ViewMaintDash
+    usecase "Supprimer Ticket" as DeleteTicket
+}
+
+package "Administration Système" {
+    usecase "Gérer les Utilisateurs (Comptes)" as ManageUsers
+    usecase "Gérer les Employés (RH)" as ManageEmployees
+}
+
+' Links for Common Features (Auth/Settings)
+Rec --> Login
+Rec --> Logout
+Rec --> Dashboard
+Rec --> Settings
+
+' Links for Receptionist
+Rec --> CreateClient
+Rec --> EditClient
+Rec --> SearchClient
+Rec --> ViewRooms
+Rec --> ChangeRoomStatus
+Rec --> CreateRes
+Rec --> EditRes
+Rec --> CancelRes
+Rec --> CheckIn
+Rec --> CheckOut
+Rec --> ViewCal
+Rec --> CreateInv
+Rec --> EditInv
+Rec --> PayInv
+Rec --> DownloadPDF
+Rec --> CalcTotal
+Rec --> AddServiceToRes
+Rec --> ReportIssue
+Rec --> UpdateTicket
+Rec --> ViewMaintDash
+
+' Links for Administrator (Exclusive features)
+Admin --> DeleteClient
+Admin --> CreateRoom
+Admin --> EditRoom
+Admin --> DeleteRoom
+Admin --> ManageServices
+Admin --> DeleteTicket
+Admin --> ManageUsers
+Admin --> ManageEmployees
+
+note "Les Réceptionnistes ne peuvent\nPAS créer/supprimer des chambres,\nni gérer les utilisateurs/employés." as N1
+ViewRooms .. N1
+ManageUsers .. N1
+
+@enduml

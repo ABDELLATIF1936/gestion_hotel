@@ -50,4 +50,9 @@ public class FacturationController {
             throw e;
         }
     }
+
+    public void generatePdf(com.hotel.model.Facture facture, String destPath) throws Exception {
+        com.hotel.service.PdfService pdfService = new com.hotel.service.PdfService();
+        pdfService.generateInvoicePdf(facture, destPath);
+    }
 }

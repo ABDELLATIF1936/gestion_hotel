@@ -1,0 +1,169 @@
+@startuml
+skinparam classAttributeIconSize 0
+scale 0.8
+
+package "com.hotel.model" {
+    enum RoleUtilisateur {
+        ADMIN
+        RECEPTIONNISTE
+    }
+
+    class Utilisateur {
+        - int idUtilisateur
+        - String username
+        - String passwordHash
+        - RoleUtilisateur role
+        - boolean actif
+        + boolean checkPassword(String)
+    }
+
+    enum Role {
+        RECEPTIONNISTE
+        ENTRETIEN
+        MANAGER
+        ADMINISTRATEUR
+    }
+
+    class Employe {
+        - int idEmploye
+        - String nom
+        - String prenom
+        - Role role
+        - String telephone
+        - String email
+        + String getNomComplet()
+    }
+
+    class Client {
+        - int idClient
+        - String nom
+        - String prenom
+        - String telephone
+        - String email
+        - TypeClient typeClient
+    }
+
+    class Chambre {
+        - int numeroChambre
+        - CategorieChambre categorie
+        - StatutChambre statut
+        - double prixNuit
+        - String description
+    }
+
+    class Reservation {
+        - int idReservation
+        - LocalDate dateDebut
+        - LocalDate dateFin
+        - LocalDate checkIn
+        - LocalDate checkOut
+        - StatutReservation statut
+        - int nbPersonnes
+        - String notes
+        + double getDureeSejour()
+    }
+
+    class ServiceSupplementaire {
+        - int idService
+        - String nom
+        - double prix
+        - String description
+        - boolean actif
+    }
+
+    class Facture {
+        - int idFacture
+        - LocalDate dateEmission
+        - double montantTotal
+        - StatutFacture statut
+    }
+
+    class LigneFacture {
+        - int idLigne
+        - String description
+        - int quantite
+        - double prixUnitaire
+    }
+    
+    class TacheEntretien {
+        - int idTache
+        - TypeTache type
+        - LocalDate date
+        - StatutTache statut
+        - String description
+    }
+}
+
+package "com.hotel.controller" {
+    class LoginController {
+        - IAuthenticationService authService
+        + void login(String, String)
+    }
+
+    class ReservationController {
+        - IReservationService reservationService
+        - IServiceSupplementaireService serviceService
+        + Reservation createReservation(Reservation)
+        + void addServiceToReservation(int, int, int)
+        + void checkIn(int)
+        + void checkOut(int)
+    }
+
+    class ChambreController {
+        - IChambreService chambreService
+        + void updateStatut(int, StatutChambre)
+        + List<Chambre> getAvailableChambres()
+    }
+    
+    class EmployeController {
+        - IEmployeService employeService
+        + void createEmploye(Employe)
+    }
+    
+    class FactureController {
+        - IFactureService factureService
+        + Facture generateFacture(int)
+    }
+}
+
+package "com.hotel.service" {
+    class AuthenticationService
+    class ReservationService
+    class ChambreService
+    class EmployeService
+    class FactureService
+}
+
+package "com.hotel.dao" {
+    interface IReservationDAO
+    interface IChambreDAO
+    interface IEmployeDAO
+    interface IFactureDAO
+    interface IServiceDAO
+    interface IUtilisateurDAO
+}
+
+' Relations
+Utilisateur "1" *-- "0..1" Employe : correspond à >
+Employe "1" -- "*" TacheEntretien : assigné à <
+Reservation "*" -- "1" Client : réservé par >
+Reservation "*" -- "1" Chambre : concerne >
+Reservation "*" -- "*" ServiceSupplementaire : contient >
+(Reservation, ServiceSupplementaire) .. Inclure
+Facture "1" -- "1" Reservation : facture pour >
+Facture "1" *-- "*" LigneFacture : composée de >
+Chambre "1" -- "*" TacheEntretien : objet de >
+
+LoginController ..> AuthenticationService
+ReservationController ..> ReservationService
+ChambreController ..> ChambreService
+EmployeController ..> EmployeService
+FactureController ..> FactureService
+
+AuthenticationService ..> IUtilisateurDAO
+ReservationService ..> IReservationDAO
+ChambreService ..> IChambreDAO
+EmployeService ..> IEmployeDAO
+FactureService ..> IFactureDAO
+
+@enduml

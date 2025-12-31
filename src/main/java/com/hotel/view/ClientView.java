@@ -22,9 +22,9 @@ import java.util.List;
  */
 public class ClientView extends VBox {
     private static final Logger logger = Logger.getLogger(ClientView.class);
-    
+
     private ClientController controller;
-    
+
     // Composants du formulaire
     private TextField txtNom;
     private TextField txtPrenom;
@@ -32,18 +32,18 @@ public class ClientView extends VBox {
     private TextField txtEmail;
     private ComboBox<String> cmbTypeClient;
     private TextField txtSearch;
-    
+
     // TableView
     private TableView<Client> tableView;
     private ObservableList<Client> clientList;
-    
+
     // Boutons
     private Button btnAjouter;
     private Button btnModifier;
     private Button btnSupprimer;
     private Button btnRechercher;
     private Button btnReinitialiser;
-    
+
     // Labels de statut
     private Label lblStatus;
 
@@ -54,6 +54,7 @@ public class ClientView extends VBox {
             setupLayout();
             setupStyles();
             setupEventHandlers();
+            adaptInterfaceToRole(); // Add this line
             loadClients();
         } catch (Exception e) {
             logger.error("Erreur lors de l'initialisation de ClientView", e);
@@ -70,53 +71,53 @@ public class ClientView extends VBox {
         cmbTypeClient = new ComboBox<>();
         cmbTypeClient.getItems().addAll("REGULIER", "VIP", "ENTREPRISE");
         cmbTypeClient.setValue("REGULIER");
-        
+
         txtSearch = new TextField();
         txtSearch.setPromptText("Rechercher par nom ou prénom...");
-        
+
         // TableView
         tableView = new TableView<>();
         clientList = FXCollections.observableArrayList();
         tableView.setItems(clientList);
-        
+
         // Colonnes avec configuration flexible
         TableColumn<Client, Integer> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(new PropertyValueFactory<>("idClient"));
         TableViewHelper.configureFixedColumn(colId, 60);
-        
+
         TableColumn<Client, String> colNom = new TableColumn<>("Nom");
         colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
         TableViewHelper.configureFlexibleColumn(colNom, 100, 150);
-        
+
         TableColumn<Client, String> colPrenom = new TableColumn<>("Prénom");
         colPrenom.setCellValueFactory(new PropertyValueFactory<>("prenom"));
         TableViewHelper.configureFlexibleColumn(colPrenom, 100, 150);
-        
+
         TableColumn<Client, String> colTelephone = new TableColumn<>("Téléphone");
         colTelephone.setCellValueFactory(new PropertyValueFactory<>("telephone"));
         TableViewHelper.configureFlexibleColumn(colTelephone, 100, 120);
-        
+
         TableColumn<Client, String> colEmail = new TableColumn<>("Email");
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         TableViewHelper.configureFlexibleColumn(colEmail, 150, 250);
-        
+
         TableColumn<Client, String> colType = new TableColumn<>("Type");
         colType.setCellValueFactory(new PropertyValueFactory<>("typeClient"));
         TableViewHelper.configureFlexibleColumn(colType, 80, 100);
-        
+
         tableView.getColumns().addAll(colId, colNom, colPrenom, colTelephone, colEmail, colType);
-        
+
         // Configurer le tableau pour qu'il s'adapte à la taille disponible
         TableViewHelper.configureAutoResizeTableView(tableView);
         tableView.setMinHeight(220);
-        
+
         // Boutons
         btnAjouter = new Button("➕ Ajouter");
         btnModifier = new Button("✏️ Modifier");
         btnSupprimer = new Button("🗑️ Supprimer");
         btnRechercher = new Button("🔍 Rechercher");
         btnReinitialiser = new Button("🔄 Réinitialiser");
-        
+
         // Label de statut
         lblStatus = new Label();
         lblStatus.setWrapText(true);
@@ -125,38 +126,37 @@ public class ClientView extends VBox {
     private void setupLayout() {
         setSpacing(10);
         setPadding(new Insets(10));
-        
+
         // Conteneur principal avec scroll
         VBox contentContainer = new VBox(10);
         contentContainer.setPadding(new Insets(5));
-        
+
         // Titre
         Label title = new Label("Gestion des Clients");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         title.setTextFill(Color.web("#2c3e50"));
-        
+
         // Zone de recherche
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(Pos.CENTER_LEFT);
         searchBox.getChildren().addAll(
-            new Label("Recherche:"),
-            txtSearch,
-            btnRechercher,
-            btnReinitialiser
-        );
+                new Label("Recherche:"),
+                txtSearch,
+                btnRechercher,
+                btnReinitialiser);
         HBox.setHgrow(txtSearch, Priority.ALWAYS);
-        
+
         // Formulaire dans un Accordion (pliable)
         Accordion accordion = new Accordion();
         TitledPane formPane = new TitledPane("📝 Formulaire d'ajout/modification", null);
         formPane.setExpanded(false); // Fermé par défaut pour économiser l'espace
-        
+
         GridPane form = new GridPane();
         form.setHgap(15);
         form.setVgap(10);
         form.setPadding(new Insets(15));
         form.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 5;");
-        
+
         form.add(new Label("Nom *:"), 0, 0);
         form.add(txtNom, 1, 0);
         form.add(new Label("Prénom *:"), 0, 1);
@@ -167,30 +167,30 @@ public class ClientView extends VBox {
         form.add(txtEmail, 1, 3);
         form.add(new Label("Type *:"), 0, 4);
         form.add(cmbTypeClient, 1, 4);
-        
+
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPrefWidth(100);
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setHgrow(Priority.ALWAYS);
         form.getColumnConstraints().addAll(col1, col2);
-        
+
         // Boutons d'action
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
         buttonBox.getChildren().addAll(btnAjouter, btnModifier, btnSupprimer);
-        
+
         VBox formContainer = new VBox(10);
         formContainer.getChildren().addAll(form, buttonBox);
         formPane.setContent(formContainer);
         accordion.getPanes().add(formPane);
-        
+
         // TableView - prend tout l'espace disponible
         tableView.setPrefHeight(Region.USE_COMPUTED_SIZE);
         VBox.setVgrow(tableView, Priority.ALWAYS);
-        
+
         contentContainer.getChildren().addAll(title, searchBox, accordion, tableView, lblStatus);
-        
+
         // ScrollPane pour tout le contenu
         ScrollPane mainScrollPane = new ScrollPane(contentContainer);
         mainScrollPane.setFitToWidth(true);
@@ -198,35 +198,33 @@ public class ClientView extends VBox {
         mainScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         mainScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         mainScrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-        
+
         getChildren().add(mainScrollPane);
         VBox.setVgrow(mainScrollPane, Priority.ALWAYS);
     }
 
     private void setupStyles() {
         // Styles des boutons
-        String buttonStyle = 
-            "-fx-background-color: #3498db; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 8 15; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;";
-        
+        String buttonStyle = "-fx-background-color: #3498db; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 8 15; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;";
+
         btnAjouter.setStyle(buttonStyle);
         btnModifier.setStyle(buttonStyle);
         btnRechercher.setStyle(buttonStyle);
         btnReinitialiser.setStyle(buttonStyle);
-        
+
         btnSupprimer.setStyle(
-            "-fx-background-color: #e74c3c; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 8 15; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;"
-        );
-        
+                "-fx-background-color: #e74c3c; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-padding: 8 15; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-cursor: hand;");
+
         // Styles des champs
         String fieldStyle = "-fx-font-size: 14px; -fx-padding: 5;";
         txtNom.setStyle(fieldStyle);
@@ -234,7 +232,7 @@ public class ClientView extends VBox {
         txtTelephone.setStyle(fieldStyle);
         txtEmail.setStyle(fieldStyle);
         txtSearch.setStyle(fieldStyle);
-        
+
         // TableView
         tableView.setStyle("-fx-font-size: 13px;");
     }
@@ -246,7 +244,7 @@ public class ClientView extends VBox {
                 fillForm(newVal);
             }
         });
-        
+
         // Boutons
         btnAjouter.setOnAction(e -> addClient());
         btnModifier.setOnAction(e -> updateClient());
@@ -256,6 +254,22 @@ public class ClientView extends VBox {
             clearForm();
             loadClients();
         });
+    }
+
+    private void adaptInterfaceToRole() {
+        if (com.hotel.security.AuthenticationService.getUtilisateurConnecte() == null) {
+            return;
+        }
+
+        // Receptionists cannot delete clients
+        boolean isReceptionniste = com.hotel.security.AuthenticationService.getUtilisateurConnecte()
+                .getRole() == com.hotel.model.RoleUtilisateur.RECEPTIONNISTE;
+
+        // Restriction: Receptionist cannot delete clients
+        if (isReceptionniste) {
+            btnSupprimer.setVisible(false);
+            btnSupprimer.setManaged(false);
+        }
     }
 
     private void fillForm(Client client) {
@@ -284,7 +298,7 @@ public class ClientView extends VBox {
             client.setTelephone(txtTelephone.getText());
             client.setEmail(txtEmail.getText());
             client.setTypeClient(cmbTypeClient.getValue());
-            
+
             Client created = controller.createClient(client);
             showSuccess("Client ajouté avec succès (ID: " + created.getIdClient() + ")");
             clearForm();
@@ -301,14 +315,14 @@ public class ClientView extends VBox {
             showError("Veuillez sélectionner un client à modifier");
             return;
         }
-        
+
         try {
             selected.setNom(txtNom.getText());
             selected.setPrenom(txtPrenom.getText());
             selected.setTelephone(txtTelephone.getText());
             selected.setEmail(txtEmail.getText());
             selected.setTypeClient(cmbTypeClient.getValue());
-            
+
             controller.updateClient(selected);
             showSuccess("Client modifié avec succès");
             clearForm();
@@ -325,12 +339,12 @@ public class ClientView extends VBox {
             showError("Veuillez sélectionner un client à supprimer");
             return;
         }
-        
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmation");
         confirm.setHeaderText("Supprimer le client");
         confirm.setContentText("Êtes-vous sûr de vouloir supprimer " + selected.getNomComplet() + " ?");
-        
+
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             try {
                 controller.deleteClient(selected.getIdClient());
@@ -350,7 +364,7 @@ public class ClientView extends VBox {
             loadClients();
             return;
         }
-        
+
         try {
             List<Client> results = controller.searchClients(searchTerm);
             clientList.clear();
@@ -369,7 +383,7 @@ public class ClientView extends VBox {
     public void refreshData() {
         loadClients();
     }
-    
+
     private void loadClients() {
         try {
             List<Client> clients = controller.getAllClients();
