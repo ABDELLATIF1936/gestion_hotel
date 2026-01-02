@@ -1,181 +1,76 @@
-# Système de Gestion d'Hôtel
+# Système de Gestion Hôtelière (Hotel Management System)
 
-Application JavaFX complète pour la gestion d'un hôtel avec architecture MVC et design patterns.
+Application de gestion hôtelière complète développée en **Java 11**, **JavaFX** et **MySQL**.  
+Conçue dans le cadre d'un projet académique, elle respecte une architecture MVC rigoureuse et implémente plusieurs Design Patterns.
 
-## 📋 Description
+## 🚀 Fonctionnalités Clés
 
-Cette application permet de gérer :
-- Les chambres (disponibilité, statut, catégories)
-- Les réservations (création, modification, annulation)
-- Les clients (enregistrement, historique)
-- La facturation (génération automatique, export PDF)
-- Les services supplémentaires
-- Le personnel et les tâches d'entretien
+### 1. Gestion des Réservations (Front Office)
+*   **Création** : Sélection intuitive des dates avec vérification de disponibilité en temps réel.
+*   **Check-in / Check-out** : Suivi précis des dates d'arrivée et de départ.
+*   **Filtres** : Recherche avancée par nom client, date ou statut.
+*   **Services** : Ajout de services optionnels (Petit-déjeuner, Spa, Parking...) lors de la réservation.
 
-## 🛠️ Technologies
+### 2. Facturation & Comptabilité
+*   **Génération Automatique** : Calcul du montant total incluant nuitées et services.
+*   **Export PDF** : Bouton dédié pour générer et télécharger une facture professionnelle au format PDF.
+*   **Suivi** : Gestion des statuts de paiement (Payée, En attente).
 
-- **Java 11+**
-- **JavaFX 17** (Interface graphique)
-- **MySQL 8.0** (Base de données)
-- **Maven** (Gestion des dépendances)
-- **HikariCP** (Pool de connexions)
-- **iTextPDF** (Génération de factures PDF)
-- **JUnit 5** (Tests unitaires)
+### 3. Gestion des Chambres & Entretien (Housekeeping)
+*   **État des Lieux** : Suivi des statuts (Disponible, Occupée, Hors Service).
+*   **Entretien** : Module dédié pour assigner et suivre les tâches de nettoyage/réparation.
 
-## 📁 Structure du Projet
+### 4. Sécurité & Rôles (RBAC)
+Système robuste de contrôle d'accès basé sur les rôles :
+*   **Administrateur (ADMIN)** : Accès total (Gestion employés, configuration, utilisateurs).
+*   **Réceptionniste** : Accès restreint (Réservations, Clients, Factures).
+    *   *Restriction* : Ne peut PAS supprimer de clients ni créer/supprimer des chambres (lecture seule/modif statut uniquement).
+
+## 🛠technologies Utilisées
+
+*   **Langage** : Java 11
+*   **Interface Graphique** : JavaFX 17
+*   **Base de Données** : MySQL 8.0
+*   **ORM / DAO** : JDBC natif avec Pattern DAO
+*   **PDF** : iTextPDF 5.5.13
+*   **Gestion de dépendances** : Maven
+
+## 📂 Structure du Projet
 
 ```
-hotel_management_system/
-├── src/
-│   ├── main/
-│   │   ├── java/com/hotel/
-│   │   │   ├── model/          # Entités métier
-│   │   │   ├── dao/            # Accès aux données
-│   │   │   ├── service/        # Logique métier
-│   │   │   ├── controller/     # Contrôleurs MVC
-│   │   │   ├── view/           # Interface JavaFX
-│   │   │   ├── util/           # Classes utilitaires
-│   │   │   ├── factory/        # Design Pattern Factory
-│   │   │   ├── strategy/       # Design Pattern Strategy
-│   │   │   ├── observer/       # Design Pattern Observer
-│   │   │   └── exception/      # Exceptions personnalisées
-│   │   └── resources/
-│   │       ├── config/         # Configuration
-│   │       ├── fxml/           # Fichiers FXML
-│   │       ├── css/            # Styles CSS
-│   │       └── sql/            # Scripts SQL
-│   └── test/                   # Tests unitaires
-├── lib/                        # Bibliothèques externes
-├── docs/                       # Documentation
-└── pom.xml                     # Configuration Maven
+Com.hotel
+├── controller   # Contrôleurs (Logique de présentation)
+├── model        # Entités Métier (Reservation, Chambre...)
+├── view         # Vues JavaFX (IHM)
+├── service      # Logique Métier (Interfaces & Implémentations)
+├── dao          # Accès aux Données (Pattern DAO)
+├── security     # Gestion des Permissions (RBAC)
+└── util         # Utilitaires (Connexion DB, PDF, Logs)
 ```
 
-## 🚀 Installation
+## 📋 Installation & Démarrage
 
-### Prérequis
+1.  **Base de Données** :
+    *   Ouvrez votre gestionnaire MySQL (phpMyAdmin, Workbench).
+    *   Créez une base de données nommée `gestion_hotel`.
+    *   Importez le fichier **`database.sql`** situé à la racine du projet.
 
-- Java JDK 11 ou supérieur
-- Maven 3.6+
-- MySQL 8.0+
-- IDE (IntelliJ IDEA recommandé)
+2.  **Configuration** :
+    *   Vérifiez les paramètres de connexion dans `com.hotel.util.DatabaseConnection` si nécessaire (défaut: `root`/` `).
 
-### Étapes d'installation
+3.  **Lancement** :
+    *   Exécutez la classe principale : `com.hotel.Main`.
 
-1. **Cloner ou télécharger le projet**
-   ```bash
-   cd hotel_management_system
-   ```
+4.  **Connexion** :
+    *   **Admin** : `admin` / `Admin123!`
+    *   **Réception** : `reception` / `Reception123!`
 
-2. **Créer la base de données MySQL**
-   ```sql
-   CREATE DATABASE gestion_hotel;
-   ```
+## 📐 Conception (Diagrammes)
 
-3. **Exécuter les scripts SQL**
-   - Exécuter `src/main/resources/sql/schema.sql` pour créer les tables
-   - Exécuter `src/main/resources/sql/data.sql` pour les données de test (optionnel)
-
-4. **Configurer la connexion à la base de données**
-   - Modifier `src/main/resources/config/database.properties`
-   - Mettre à jour `db.url`, `db.username`, et `db.password`
-
-5. **Installer les dépendances Maven**
-   ```bash
-   mvn clean install
-   ```
-
-## ▶️ Exécution
-
-### Avec Maven
-```bash
-mvn javafx:run
-```
-
-### Avec IntelliJ IDEA
-1. Ouvrir le projet dans IntelliJ IDEA
-2. Configurer le SDK Java 11+
-3. Exécuter la classe `com.hotel.Main`
-
-### Compilation manuelle
-```bash
-mvn compile
-java --module-path <path-to-javafx> --add-modules javafx.controls,javafx.fxml -cp target/classes com.hotel.Main
-```
-
-## 🗄️ Configuration de la Base de Données
-
-Le fichier `src/main/resources/config/database.properties` contient la configuration de connexion :
-
-```properties
-db.url=jdbc:mysql://localhost:3306/gestion_hotel
-db.username=root
-db.password=votre_mot_de_passe
-```
-
-## 📊 Schéma de Base de Données
-
-La base de données contient les tables suivantes :
-- `chambre` - Informations sur les chambres
-- `client` - Données des clients
-- `employer` - Informations du personnel
-- `reservation` - Réservations
-- `facture` - Factures
-- `lignefacture` - Lignes de facture
-- `servicesupplementaire` - Services proposés
-- `tacheentretien` - Tâches de maintenance
-
-## 🧪 Tests
-
-Exécuter les tests unitaires :
-```bash
-mvn test
-```
-
-## 📚 Documentation
-
-- **Javadoc** : Générer avec `mvn javafx:javadoc`
-- **Diagrammes UML** : Disponibles dans `docs/uml/`
-- **Rapport** : Voir `docs/rapport.pdf`
-
-## 🏗️ Architecture
-
-L'application suit une architecture **MVC** avec :
-- **Model** : Entités métier dans `model/`
-- **View** : Interfaces JavaFX dans `view/`
-- **Controller** : Contrôleurs dans `controller/`
-
-### Design Patterns implémentés :
-- **DAO** : Accès aux données
-- **Factory** : Création d'objets
-- **Strategy** : Stratégies de tarification
-- **Observer** : Notifications d'événements
-- **Singleton** : Gestionnaires uniques
-
-## 👥 Auteurs
-
-Projet académique - Système de Gestion d'Hôtel
-
-## 📝 Licence
-
-Ce projet est destiné à un usage académique.
-
-## 🔧 Dépannage
-
-### Problème de connexion à la base de données
-- Vérifier que MySQL est démarré
-- Vérifier les credentials dans `database.properties`
-- Vérifier que la base de données `gestion_hotel` existe
-
-### Problème avec JavaFX
-- Vérifier que JavaFX SDK est correctement configuré
-- Utiliser `mvn javafx:run` pour l'exécution
-
-### Erreurs de compilation
-- Vérifier la version Java (minimum 11)
-- Exécuter `mvn clean install`
+Le dossier `diagrammes/` contient la documentation technique complète :
+*   **`class_diagram_logical.puml`** : Architecture en couches.
+*   **`class_diagram_patterns.puml`** : Patterns Factory, Observer, Strategy.
+*   **`sequence_diagram_*.puml`** : Flux détaillés (Login, Réservation, Facturation).
 
 ---
-
-**Date de création** : Décembre 2024  
-**Version** : 1.0.0
-
+*Projet Académique - 2024/2025*

@@ -1,0 +1,80 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+scale 0.9
+
+package "Factory Pattern (Création)" {
+    class ServiceFactory <<Factory>> {
+        + {static} getReservationService() : IReservationService
+        + {static} getChambreService() : IChambreService
+        + {static} getClientService() : IClientService
+    }
+    
+    class DAOFactory <<Factory>> {
+        + {static} getReservationDAO() : IReservationDAO
+    }
+
+    interface IReservationService <<interface>>
+    interface IReservationDAO <<interface>>
+
+    ServiceFactory ..> IReservationService : instancie >
+    DAOFactory ..> IReservationDAO : instancie >
+}
+
+package "Observer Pattern (Événements)" {
+    interface IObserver <<interface>> {
+        + update(String)
+    }
+
+    interface ISubject <<interface>> {
+        + registerObserver(IObserver)
+        + removeObserver(IObserver)
+        + notifyObservers(String)
+    }
+
+    class ReservationObserver <<Observer>> {
+        + update(String)
+    }
+
+    class ReservationService <<Subject>> {
+        - observers : List<IObserver>
+        + notifyObservers(String)
+    }
+
+    ReservationService ..|> ISubject
+    ReservationObserver ..|> IObserver
+    ReservationService -> IObserver : notifie >
+}
+
+package "Strategy Pattern (Tarification)" {
+    interface IPricingStrategy <<interface>> {
+        + calculatePrice(basePrice, nights) : double
+    }
+
+    class StandardPricingStrategy <<Strategy>> {
+        + calculatePrice(base, n)
+    }
+
+    class SeasonalPricingStrategy <<Strategy>> {
+        + calculatePrice(base, n)
+    }
+
+    class GroupPricingStrategy <<Strategy>> {
+        + calculatePrice(base, n)
+    }
+
+    class PricingContext <<Context>> {
+        - strategy : IPricingStrategy
+        + setStrategy(IPricingStrategy)
+        + executeStrategy(base, n)
+    }
+
+    PricingContext o-> IPricingStrategy
+    StandardPricingStrategy ..|> IPricingStrategy
+    SeasonalPricingStrategy ..|> IPricingStrategy
+    GroupPricingStrategy ..|> IPricingStrategy
+}
+
+note "Ces patterns sont utilisés pour :\n1. Découpler la création (Factory)\n2. Gérer les notifs événements (Observer)\n3. Varier les algos de prix (Strategy)" as N1
+
+@enduml

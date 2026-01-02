@@ -1,0 +1,25 @@
+@startuml
+skinparam actorStyle awesome
+hide footbox
+
+actor "Réceptionniste" as User
+participant ":Système" as System
+
+User -> System : Demander création réservation
+activate System
+System --> User : Afficher formulaire réservation
+deactivate System
+
+User -> System : Saisir détails (Client, Dates, Chambre)
+activate System
+System -> System : Vérifier disponibilité
+alt Chambre occupée
+    System --> User : Afficher erreur "Indisponible"
+else Chambre libre
+    System -> System : Calculer prix total
+    System -> System : Enregistrer réservation
+    System --> User : Confirmer succès
+end
+deactivate System
+
+@enduml

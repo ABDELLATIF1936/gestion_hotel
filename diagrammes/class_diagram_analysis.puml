@@ -1,27 +1,27 @@
 @startuml
+skinparam classAttributeIconSize 0
 hide methods
 hide circle
-skinparam classAttributeIconSize 0
+scale 1.0
 
-package "Modèle de Domaine" {
+package "Modèle du Domaine (Business View)" {
     class Hotel {
         nom
         adresse
     }
 
     class Utilisateur {
-        username
-        password
+        identifiant
+        motDePasse
         role
-        actif
+        estActif
     }
 
     class Employe {
         nom
         prenom
         role
-        telephone
-        email
+        coordonnees
     }
 
     class Client {
@@ -29,38 +29,27 @@ package "Modèle de Domaine" {
         prenom
         telephone
         email
-        type
+        typeClient
     }
 
     class Chambre {
         numero
         categorie
         statut
-        prixNuit
+        prixBase
         description
     }
 
     class Reservation {
         dateDebut
         dateFin
-        checkIn
-        checkOut
         statut
-        nbPersonnes
-        notes
+        nombrePersonnes
     }
 
     class ServiceSupplementaire {
         nom
         prix
-        description
-        actif
-    }
-
-    class TacheEntretien {
-        type
-        date
-        statut
         description
     }
 
@@ -68,16 +57,26 @@ package "Modèle de Domaine" {
         dateEmission
         montantTotal
         statut
+        details
+    }
+
+    class TacheEntretien {
+        description
+        date
+        priorite
+        statut
     }
 }
 
-' Relations
-Utilisateur "1" -- "1" Employe : est lié à >
-Employe "1" -- "*" TacheEntretien : effectue >
+' Relations Métier
+Utilisateur "1" - "0..1" Employe : correspond à >
+Employe "1" -- "*" TacheEntretien : réalise >
 Client "1" -- "*" Reservation : effectue >
 Reservation "*" -- "1" Chambre : concerne >
 Reservation "*" -- "*" ServiceSupplementaire : inclut >
-Reservation "1" -- "0..1" Facture : génère >
+Reservation "1" -- "0..1" Facture : engendre >
 Chambre "1" -- "*" TacheEntretien : nécessite >
+
+note "Ce diagramme représente les entités\nmétier pures sans implémentation technique." as N1
 
 @enduml

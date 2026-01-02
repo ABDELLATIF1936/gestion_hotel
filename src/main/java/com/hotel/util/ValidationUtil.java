@@ -14,6 +14,10 @@ public class ValidationUtil {
     private static final Pattern PHONE_PATTERN = Pattern.compile(
         "^[0-9]{10,15}$"
     );
+    private static final Pattern M_L = Pattern.compile(
+            "^[0-9]{10,15}$"
+            );
+
 
     /**
      * Valide une adresse email.
