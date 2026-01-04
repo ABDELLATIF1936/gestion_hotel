@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # gestion_hotel
 =======
 # Système de Gestion Hôtelière
@@ -55,4 +54,3 @@ Ouvrez un terminal à la racine du projet (là où se trouve le fichier `pom.xml
 **Pour nettoyer et installer les dépendances :**
 ```bash
 mvn clean install
->>>>>>> fork_nadir_final
