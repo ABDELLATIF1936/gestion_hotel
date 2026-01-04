@@ -1,0 +1,452 @@
+package com.hotel.dao.impl;
+
+import com.hotel.dao.interfaces.IReservationDAO;
+import com.hotel.exception.DAOException;
+import com.hotel.exception.DatabaseException;
+import com.hotel.model.Reservation;
+import com.hotel.util.DatabaseConnection;
+import com.hotel.util.Logger;
+
+import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Implémentation JDBC du DAO pour les réservations.
+ */
+public class ReservationDAOImpl implements IReservationDAO {
+    private static final Logger logger = Logger.getLogger(ReservationDAOImpl.class);
+
+    @Override
+    public int create(Reservation reservation) throws DAOException {
+        // Vérifier si les colonnes check_in et check_out existent
+        boolean hasCheckInOut = checkColumnsExist();
+        
+        String sql;
+        if (hasCheckInOut) {
+            sql = "INSERT INTO reservation (idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes, check_in, check_out) " +
+                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        } else {
+            sql = "INSERT INTO reservation (idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes) " +
+                  "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        }
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            statement.setInt(1, reservation.getIdClient());
+            statement.setInt(2, reservation.getNumeroChambre());
+            statement.setDate(3, Date.valueOf(reservation.getDateDebut()));
+            statement.setDate(4, Date.valueOf(reservation.getDateFin()));
+            statement.setString(5, reservation.getStatutAsString());
+            statement.setInt(6, reservation.getNbPersonnes());
+            statement.setString(7, reservation.getNotes());
+            
+            if (hasCheckInOut) {
+                statement.setDate(8, reservation.getCheckIn() != null ? Date.valueOf(reservation.getCheckIn()) : null);
+                statement.setDate(9, reservation.getCheckOut() != null ? Date.valueOf(reservation.getCheckOut()) : null);
+            }
+            
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Échec de la création de la réservation, aucune ligne affectée");
+            }
+            
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int id = generatedKeys.getInt(1);
+                    connection.commit();
+                    logger.info("Réservation créée avec l'ID: " + id);
+                    return id;
+                } else {
+                    connection.rollback();
+                    throw new DAOException("Échec de la création de la réservation, aucun ID généré");
+                }
+            }
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion lors de la création de la réservation", e);
+            throw new DAOException("Erreur de connexion à la base de données: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la création de la réservation", e);
+            throw new DAOException("Erreur lors de la création de la réservation: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public Reservation findById(int idReservation) throws DAOException {
+        String sql = "SELECT * FROM reservation WHERE idReservation = ?";
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setInt(1, idReservation);
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    boolean hasCheckInOut = checkColumnsExist();
+                    return mapResultSetToReservation(resultSet, hasCheckInOut);
+                }
+                return null;
+            }
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la recherche de la réservation: " + idReservation, e);
+            throw new DAOException("Erreur lors de la recherche de la réservation: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Reservation> findAll() throws DAOException {
+        // Utiliser une requête explicite pour éviter les problèmes avec les colonnes manquantes
+        boolean hasCheckInOut = checkColumnsExist();
+        String sql;
+        if (hasCheckInOut) {
+            sql = "SELECT idReservation, idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes, check_in, check_out FROM reservation ORDER BY dateDebut DESC";
+        } else {
+            sql = "SELECT idReservation, idClient, numeroChambre, dateDebut, dateFin, statut, nbPersonnes, notes FROM reservation ORDER BY dateDebut DESC";
+        }
+        
+        List<Reservation> reservations = new ArrayList<>();
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            
+            while (resultSet.next()) {
+                reservations.add(mapResultSetToReservation(resultSet, hasCheckInOut));
+            }
+            return reservations;
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion à la base de données: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la récupération de toutes les réservations", e);
+            throw new DAOException("Erreur lors de la récupération des réservations: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Reservation> findByClient(int idClient) throws DAOException {
+        String sql = "SELECT * FROM reservation WHERE idClient = ? ORDER BY dateDebut DESC";
+        List<Reservation> reservations = new ArrayList<>();
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setInt(1, idClient);
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    reservations.add(mapResultSetToReservation(resultSet));
+                }
+                return reservations;
+            }
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la recherche de réservations pour le client: " + idClient, e);
+            throw new DAOException("Erreur lors de la recherche de réservations: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Reservation> findByChambre(int numeroChambre) throws DAOException {
+        String sql = "SELECT * FROM reservation WHERE numeroChambre = ? ORDER BY dateDebut DESC";
+        List<Reservation> reservations = new ArrayList<>();
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setInt(1, numeroChambre);
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    reservations.add(mapResultSetToReservation(resultSet));
+                }
+                return reservations;
+            }
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la recherche de réservations pour la chambre: " + numeroChambre, e);
+            throw new DAOException("Erreur lors de la recherche de réservations: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Reservation> findByPeriod(LocalDate dateDebut, LocalDate dateFin) throws DAOException {
+        String sql = "SELECT * FROM reservation WHERE (dateDebut <= ? AND dateFin >= ?) ORDER BY dateDebut";
+        List<Reservation> reservations = new ArrayList<>();
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setDate(1, Date.valueOf(dateFin));
+            statement.setDate(2, Date.valueOf(dateDebut));
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    reservations.add(mapResultSetToReservation(resultSet));
+                }
+                return reservations;
+            }
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la recherche de réservations pour la période", e);
+            throw new DAOException("Erreur lors de la recherche de réservations: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Reservation> findActive() throws DAOException {
+        String sql = "SELECT * FROM reservation WHERE statut IN ('CONFIRMEE', 'EN_COURS') " +
+                     "AND dateFin >= CURDATE() ORDER BY dateDebut";
+        List<Reservation> reservations = new ArrayList<>();
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            
+            while (resultSet.next()) {
+                reservations.add(mapResultSetToReservation(resultSet));
+            }
+            return reservations;
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la récupération des réservations actives", e);
+            throw new DAOException("Erreur lors de la récupération des réservations actives: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean isChambreAvailable(int numeroChambre, LocalDate dateDebut, LocalDate dateFin, 
+                                      Integer excludeReservationId) throws DAOException {
+        String sql = "SELECT COUNT(*) FROM reservation " +
+                     "WHERE numeroChambre = ? " +
+                     "AND statut IN ('CONFIRMEE', 'EN_COURS') " +
+                     "AND ? < dateFin AND ? > dateDebut";
+        
+        if (excludeReservationId != null) {
+            sql += " AND idReservation != ?";
+        }
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setInt(1, numeroChambre);
+            statement.setDate(2, Date.valueOf(dateFin));
+            statement.setDate(3, Date.valueOf(dateDebut));
+            
+            if (excludeReservationId != null) {
+                statement.setInt(4, excludeReservationId);
+            }
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count == 0;
+                }
+                return true;
+            }
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la vérification de disponibilité de la chambre: " + numeroChambre, e);
+            throw new DAOException("Erreur lors de la vérification de disponibilité: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean update(Reservation reservation) throws DAOException {
+        // Vérifier si les colonnes check_in et check_out existent
+        boolean hasCheckInOut = checkColumnsExist();
+        
+        String sql;
+        if (hasCheckInOut) {
+            sql = "UPDATE reservation SET idClient = ?, numeroChambre = ?, dateDebut = ?, dateFin = ?, " +
+                  "statut = ?, nbPersonnes = ?, notes = ?, check_in = ?, check_out = ? WHERE idReservation = ?";
+        } else {
+            sql = "UPDATE reservation SET idClient = ?, numeroChambre = ?, dateDebut = ?, dateFin = ?, " +
+                  "statut = ?, nbPersonnes = ?, notes = ? WHERE idReservation = ?";
+        }
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setInt(1, reservation.getIdClient());
+            statement.setInt(2, reservation.getNumeroChambre());
+            statement.setDate(3, Date.valueOf(reservation.getDateDebut()));
+            statement.setDate(4, Date.valueOf(reservation.getDateFin()));
+            statement.setString(5, reservation.getStatutAsString());
+            statement.setInt(6, reservation.getNbPersonnes());
+            statement.setString(7, reservation.getNotes());
+            
+            if (hasCheckInOut) {
+                statement.setDate(8, reservation.getCheckIn() != null ? Date.valueOf(reservation.getCheckIn()) : null);
+                statement.setDate(9, reservation.getCheckOut() != null ? Date.valueOf(reservation.getCheckOut()) : null);
+                statement.setInt(10, reservation.getIdReservation());
+            } else {
+                statement.setInt(8, reservation.getIdReservation());
+            }
+            
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected > 0) {
+                connection.commit();
+                logger.info("Réservation mise à jour avec l'ID: " + reservation.getIdReservation());
+                return true;
+            }
+            connection.rollback();
+            return false;
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la mise à jour de la réservation: " + reservation.getIdReservation(), e);
+            throw new DAOException("Erreur lors de la mise à jour de la réservation: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean delete(int idReservation) throws DAOException {
+        String sql = "DELETE FROM reservation WHERE idReservation = ?";
+        
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            
+            statement.setInt(1, idReservation);
+            
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected > 0) {
+                connection.commit();
+                logger.info("Réservation supprimée avec l'ID: " + idReservation);
+                return true;
+            }
+            connection.rollback();
+            return false;
+        } catch (DatabaseException e) {
+            logger.error("Erreur de connexion", e);
+            throw new DAOException("Erreur de connexion � la base de donn�es: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.error("Erreur lors de la suppression de la réservation: " + idReservation, e);
+            throw new DAOException("Erreur lors de la suppression de la réservation: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Mappe un ResultSet vers un objet Reservation.
+     *
+     * @param resultSet le ResultSet à mapper
+     * @return un objet Reservation
+     * @throws SQLException si une erreur SQL survient
+     */
+    private Reservation mapResultSetToReservation(ResultSet resultSet) throws SQLException {
+        Reservation reservation = new Reservation();
+        try {
+            // Détecter automatiquement si les colonnes check_in et check_out existent
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            boolean hasCheckIn = false;
+            boolean hasCheckOut = false;
+            
+            int columnCount = metaData.getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i).toLowerCase();
+                if (columnName.equals("check_in")) {
+                    hasCheckIn = true;
+                }
+                if (columnName.equals("check_out")) {
+                    hasCheckOut = true;
+                }
+            }
+            
+            reservation.setIdReservation(resultSet.getInt("idReservation"));
+            reservation.setIdClient(resultSet.getInt("idClient"));
+            reservation.setNumeroChambre(resultSet.getInt("numeroChambre"));
+            
+            Date dateDebut = resultSet.getDate("dateDebut");
+            if (dateDebut != null) {
+                // Utiliser la méthode spéciale pour charger depuis la DB (sans validation stricte)
+                reservation.setDateDebutFromDB(dateDebut.toLocalDate());
+            }
+            
+            Date dateFin = resultSet.getDate("dateFin");
+            if (dateFin != null) {
+                // Utiliser la méthode spéciale pour charger depuis la DB (sans validation stricte)
+                reservation.setDateFinFromDB(dateFin.toLocalDate());
+            }
+            
+            reservation.setStatut(Reservation.parseStatut(resultSet.getString("statut")));
+            reservation.setNbPersonnes(resultSet.getInt("nbPersonnes"));
+            
+            String notes = resultSet.getString("notes");
+            reservation.setNotes(notes != null ? notes : "");
+            
+            // Gérer check_in et check_out seulement si les colonnes existent
+            if (hasCheckIn) {
+                Date checkIn = resultSet.getDate("check_in");
+                if (checkIn != null) {
+                    reservation.setCheckInFromDB(checkIn.toLocalDate());
+                }
+            }
+            
+            if (hasCheckOut) {
+                Date checkOut = resultSet.getDate("check_out");
+                if (checkOut != null) {
+                    reservation.setCheckOutFromDB(checkOut.toLocalDate());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Erreur lors du mapping du ResultSet vers Reservation", e);
+            throw new SQLException("Erreur lors du mapping: " + e.getMessage(), e);
+        }
+        return reservation;
+    }
+    
+    /**
+     * Mappe un ResultSet vers un objet Reservation (version avec paramètre hasCheckInOut pour compatibilité).
+     *
+     * @param resultSet le ResultSet à mapper
+     * @param hasCheckInOut indique si les colonnes check_in et check_out existent (ignoré, détection automatique utilisée)
+     * @return un objet Reservation
+     * @throws SQLException si une erreur SQL survient
+     */
+    private Reservation mapResultSetToReservation(ResultSet resultSet, boolean hasCheckInOut) throws SQLException {
+        // Utiliser la détection automatique au lieu du paramètre
+        return mapResultSetToReservation(resultSet);
+    }
+    
+    /**
+     * Vérifie si les colonnes check_in et check_out existent dans la table reservation.
+     * @return true si les colonnes existent, false sinon
+     */
+    private boolean checkColumnsExist() {
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                 "WHERE TABLE_SCHEMA = DATABASE() " +
+                 "AND TABLE_NAME = 'reservation' " +
+                 "AND COLUMN_NAME IN ('check_in', 'check_out')")) {
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count == 2; // Les deux colonnes doivent exister
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Erreur lors de la vérification des colonnes check_in/check_out, supposons qu'elles n'existent pas: " + e.getMessage());
+            return false;
+        }
+        return false;
+    }
+}
+
