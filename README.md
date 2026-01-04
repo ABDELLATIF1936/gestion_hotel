@@ -1,76 +1,54 @@
-# Système de Gestion Hôtelière (Hotel Management System)
+# Système de Gestion Hôtelière
 
-Application de gestion hôtelière complète développée en **Java 11**, **JavaFX** et **MySQL**.  
-Conçue dans le cadre d'un projet académique, elle respecte une architecture MVC rigoureuse et implémente plusieurs Design Patterns.
+Ce projet est une application de bureau complète pour la gestion hôtelière, réalisée dans le cadre du module **Programmation Orientée Objet (POO)** du Master Sciences et Techniques (RSI) à la FST de Settat.
 
-## 🚀 Fonctionnalités Clés
+## 👥 Membres du groupe
 
-### 1. Gestion des Réservations (Front Office)
-*   **Création** : Sélection intuitive des dates avec vérification de disponibilité en temps réel.
-*   **Check-in / Check-out** : Suivi précis des dates d'arrivée et de départ.
-*   **Filtres** : Recherche avancée par nom client, date ou statut.
-*   **Services** : Ajout de services optionnels (Petit-déjeuner, Spa, Parking...) lors de la réservation.
+Projet réalisé par :
+* **Saad ADDAR**
+* **Abdellatif HARAKAT**
+* **Nadir ALMELLOUKI**
+* **Omar EL KHAIRI**
 
-### 2. Facturation & Comptabilité
-*   **Génération Automatique** : Calcul du montant total incluant nuitées et services.
-*   **Export PDF** : Bouton dédié pour générer et télécharger une facture professionnelle au format PDF.
-*   **Suivi** : Gestion des statuts de paiement (Payée, En attente).
-
-### 3. Gestion des Chambres & Entretien (Housekeeping)
-*   **État des Lieux** : Suivi des statuts (Disponible, Occupée, Hors Service).
-*   **Entretien** : Module dédié pour assigner et suivre les tâches de nettoyage/réparation.
-
-### 4. Sécurité & Rôles (RBAC)
-Système robuste de contrôle d'accès basé sur les rôles :
-*   **Administrateur (ADMIN)** : Accès total (Gestion employés, configuration, utilisateurs).
-*   **Réceptionniste** : Accès restreint (Réservations, Clients, Factures).
-    *   *Restriction* : Ne peut PAS supprimer de clients ni créer/supprimer des chambres (lecture seule/modif statut uniquement).
-
-## 🛠technologies Utilisées
-
-*   **Langage** : Java 11
-*   **Interface Graphique** : JavaFX 17
-*   **Base de Données** : MySQL 8.0
-*   **ORM / DAO** : JDBC natif avec Pattern DAO
-*   **PDF** : iTextPDF 5.5.13
-*   **Gestion de dépendances** : Maven
-
-## 📂 Structure du Projet
-
-```
-Com.hotel
-├── controller   # Contrôleurs (Logique de présentation)
-├── model        # Entités Métier (Reservation, Chambre...)
-├── view         # Vues JavaFX (IHM)
-├── service      # Logique Métier (Interfaces & Implémentations)
-├── dao          # Accès aux Données (Pattern DAO)
-├── security     # Gestion des Permissions (RBAC)
-└── util         # Utilitaires (Connexion DB, PDF, Logs)
-```
-
-## 📋 Installation & Démarrage
-
-1.  **Base de Données** :
-    *   Ouvrez votre gestionnaire MySQL (phpMyAdmin, Workbench).
-    *   Créez une base de données nommée `gestion_hotel`.
-    *   Importez le fichier **`database.sql`** situé à la racine du projet.
-
-2.  **Configuration** :
-    *   Vérifiez les paramètres de connexion dans `com.hotel.util.DatabaseConnection` si nécessaire (défaut: `root`/` `).
-
-3.  **Lancement** :
-    *   Exécutez la classe principale : `com.hotel.Main`.
-
-4.  **Connexion** :
-    *   **Admin** : `admin` / `Admin123!`
-    *   **Réception** : `reception` / `Reception123!`
-
-## 📐 Conception (Diagrammes)
-
-Le dossier `diagrammes/` contient la documentation technique complète :
-*   **`class_diagram_logical.puml`** : Architecture en couches.
-*   **`class_diagram_patterns.puml`** : Patterns Factory, Observer, Strategy.
-*   **`sequence_diagram_*.puml`** : Flux détaillés (Login, Réservation, Facturation).
+**Encadrant :** Pr. Said El Kafhali  
+**Année Universitaire :** 2025-2026
 
 ---
-*Projet Académique - 2024/2025*
+
+## ⚙️ Prérequis techniques
+
+Avant de lancer le projet, assurez-vous de disposer des éléments suivants :
+* **Java JDK 25** (ou version 17+ minimum)
+* **Maven** (pour la gestion des dépendances et la compilation)
+* **MySQL 8.0** (Serveur de base de données)
+* **Git** (pour le clonage du dépôt)
+
+---
+
+## 🚀 Instructions pour compiler et exécuter
+
+Suivez ces étapes pour installer et lancer l'application sur votre machine locale :
+
+### 1. Configuration de la Base de Données
+1.  Ouvrez votre gestionnaire de base de données (MySQL Workbench, phpMyAdmin, ou ligne de commande).
+2.  Créez une base de données vide nommée `gestion_hotel`.
+3.  Exécutez le script SQL d'initialisation situé dans le dossier des ressources :
+    * Chemin : `src/main/resources/sql/database_init.sql` (ou `database.sql` selon votre fichier).
+    * *Ce script créera les tables (Client, Chambre, Reservation, etc.) et insérera le compte administrateur par défaut.*
+
+### 2. Configuration de l'application
+1.  Accédez au fichier de configuration de la base de données :
+    * `src/main/resources/config/database.properties`
+2.  Modifiez, si nécessaire, les identifiants pour correspondre à votre installation MySQL locale :
+    ```properties
+    db.url=jdbc:mysql://localhost:3306/gestion_hotel
+    db.user=root
+    db.password=VOTRE_MOT_DE_PASSE
+    ```
+
+### 3. Compilation et Lancement (via Maven)
+Ouvrez un terminal à la racine du projet (là où se trouve le fichier `pom.xml`) et exécutez les commandes suivantes :
+
+**Pour nettoyer et installer les dépendances :**
+```bash
+mvn clean install
